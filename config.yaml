@@ -1,0 +1,14 @@
+credentials:
+  usernames:
+    # Tu cuenta de administrador
+    admin:
+      password: '$2b$12$Ea.g... (PEGAR TU HASH GENERADO PARA ADMIN)'
+    
+    # Un usuario médico de ejemplo
+    jgarcia:
+      password: '$2b$12$Kb.Z... (PEGAR TU HASH GENERADO PARA MEDICO)'
+
+cookie:
+  expiry_days: 60 # Días que dura la sesión
+  key: 'clave_secreta_para_cookie_123' # Cambia esto por cualquier frase
+  name: 'oncoearly_cookie_app'
