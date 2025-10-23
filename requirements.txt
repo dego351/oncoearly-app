@@ -2,7 +2,8 @@ streamlit
 streamlit-authenticator
 pandas
 scikit-learn
-shap
 joblib
-PyYAML
+shap
 azure-storage-blob
+PyYAML
+matplotlib
