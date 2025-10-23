@@ -344,7 +344,22 @@ if authentication_status:
 
 # --- 9. MENSAJES DE ERROR/INFO DE LOGIN ---
 elif authentication_status == False:
+    # --- Caso 1: El login falló (contraseña incorrecta) ---
     st.error('❌ Usuario/contraseña incorrecto')
-elif authentication_status == None:
-    st.warning('Por favor, ingrese su usuario y contraseña.')
     st.caption("“Cada dato clínico es una oportunidad para anticipar el riesgo.”")
+
+elif authentication_status == None:
+    # --- Caso 2: El login está pendiente ---
+    # (Puede ser la carga inicial O un envío vacío)
+
+    if 'authentication_status' not in st.session_state:
+        # --- Carga Inicial ---
+        # (La variable 'authentication_status' aún no existe en la sesión)
+        # Solo mostramos el caption, sin advertencia.
+        st.caption("“Cada dato clínico es una oportunidad para anticipar el riesgo.”")
+    else:
+        # --- Envío Vacío ---
+        # (El usuario hizo clic en Login con campos vacíos)
+        # Ahora sí mostramos la advertencia.
+        st.warning('⚠️ Por favor, ingrese su usuario y contraseña.')
+        st.caption("“Cada dato clínico es una oportunidad para anticipar el riesgo.”")
