@@ -78,23 +78,23 @@ def load_model_from_azure():
         return None
 
 # --- 5. FUNCIÓN DE EXPLICABILIDAD (SHAP) ---
-# Cacheamos el explainer para eficiencia
+# (Esta función ahora toma los datos de fondo correctos)
 @st.cache_resource
 def get_shap_explainer(_model, _background_data):
-    """Crea el objeto explicador de SHAP usando datos de fondo."""
-    background_int = _background_data.astype(int)
-    explainer = shap.TreeExplainer(_model, background_int)
+    """Crea el objeto explicador de SHAP usando datos de fondo procesados."""
+    # Quitamos .astype(int) ya que los datos escalados son floats
+    explainer = shap.TreeExplainer(_model, _background_data) 
     return explainer
 
 def plot_shap_force_plot(explainer, input_data):
     """Genera y muestra el gráfico SHAP force plot."""
     st.subheader("Factores clave para ESTE paciente (SHAP):")
     try:
-        input_data_int = input_data.astype(int)
-        shap_values = explainer.shap_values(input_data_int)
+        # Quitamos .astype(int)
+        shap_values = explainer.shap_values(input_data) 
         
         # Asumiendo que 1 es la clase 'Alto Riesgo'
-        fig = shap.force_plot(explainer.expected_value[1], shap_values[1], input_data_int, matplotlib=True, show=False)
+        fig = shap.force_plot(explainer.expected_value[1], shap_values[1], input_data, matplotlib=True, show=False)
         st.pyplot(fig, bbox_inches='tight')
         st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
     except Exception as e:
@@ -166,6 +166,7 @@ if authentication_status:
     # (Como se discutió, esto es necesario porque el scaler no se guardó.
     # Usamos una muestra de datos representativa del entrenamiento)
     scaler = None
+    numerical_cols_to_scale = ['age', 'family_history', 'smoking_habits', 'alcohol_consumption', 'helicobacter_pylori_infection']
     try:
         sample_data_for_scaler = pd.DataFrame({
              'age': [43, 86, 68, 57, 33],
@@ -174,7 +175,6 @@ if authentication_status:
              'alcohol_consumption': [0, 0, 1, 0, 1],
              'helicobacter_pylori_infection': [0, 1, 0, 1, 0]
         })
-        numerical_cols_to_scale = list(sample_data_for_scaler.columns)
         scaler = StandardScaler().fit(sample_data_for_scaler)
     except Exception as e:
         st.warning(f"No se pudo reajustar el scaler: {e}. Las predicciones pueden no ser precisas.")
@@ -276,6 +276,7 @@ if authentication_status:
             
             if input_data is not None:
                  try:
+                      prediction = model.predict(input_data)[0]
                       prediction_proba = model.predict_proba(input_data)[0]
                       prob_positive = prediction_proba[1] # Probabilidad de "Alto Riesgo"
 
@@ -289,19 +290,44 @@ if authentication_status:
                       else: # Medio, Bajo, Muy Bajo
                            st.success(f"**Riesgo de predicción de cáncer gástrico:**\n# {riesgo_texto.upper()}")
                       
-                      # --- Como comentario: así mostrarías el porcentaje también ---
-                      # if prob_positive >= 0.6:
-                      #     st.error(f"**Riesgo:** {riesgo_texto.upper()} ({prob_positive:.2%})")
-                      # else:
-                      #     st.success(f"**Riesgo:** {riesgo_texto.upper()} ({prob_positive:.2%})")
+                      # --- SECCIÓN SHAP CORREGIDA ---
                       
-                      # --- Mostrar el gráfico SHAP ---
-                      # Usamos una muestra de datos de fondo (del ajuste del scaler)
-                      explainer = get_shap_explainer(model, sample_data_for_scaler)
+                      # 1. Crear los datos de fondo (se cacheará)
+                      @st.cache_resource
+                      def create_shap_background(_scaler):
+                          background_data_raw = {
+                              'age': [30, 50, 70], 'gender': ['Male', 'Female', 'Male'],
+                              'family_history': [0, 1, 0], 'smoking_habits': [1, 0, 1],
+                              'alcohol_consumption': [0, 1, 0], 'helicobacter_pylori_infection': [1, 0, 0],
+                              'dietary_habits': ['High_Salt', 'Low_Salt', 'High_Salt'],
+                              'existing_conditions': ['None', 'Diabetes', 'Chronic Gastritis'],
+                              'endoscopic_images': ['Normal', 'Abnormal', 'No result'],
+                              'biopsy_results': ['Negative', 'Positive', 'No result'],
+                              'ct_scan': ['Negative', 'Positive', 'No result']
+                          }
+                          background_df = pd.DataFrame(background_data_raw)
+                          
+                          processed_list = []
+                          for i in range(len(background_df)):
+                              processed_row = procesar_datos_para_modelo(
+                                  background_df.iloc[i].to_dict(), _scaler, 
+                                  training_columns_after_dummies, numerical_cols_to_scale
+                              )
+                              processed_list.append(processed_row)
+                          # Devolvemos el DF procesado (con floats/ints, sin .astype(int))
+                          return pd.concat(processed_list) 
+
+                      background_data_processed = create_shap_background(scaler)
+                      
+                      # 2. Crear el explainer (se cacheará)
+                      explainer = get_shap_explainer(model, background_data_processed)
+                      
+                      # 3. Llamar a la función de ploteo
                       plot_shap_force_plot(explainer, input_data)
+                      # --- FIN SECCIÓN SHAP ---
 
                  except Exception as e:
-                      st.error(f"Ocurrió un error durante la predicción: {e}")
+                      st.error(f"Ocurrió un error durante la predicción o SHAP: {e}")
             else:
                  st.error("Error al procesar los datos de entrada.")
 
