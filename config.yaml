@@ -2,11 +2,11 @@ credentials:
   usernames:
     # Tu cuenta de administrador
     admin:
-      password: '$2b$12$Ea.g... (PEGAR TU HASH GENERADO PARA ADMIN)'
+      password: '$2b$12$15tedniBurs5pK.hFSJXT.dbXKWjDsbBR7KRhrppcpsR9arnx.hcW'
     
     # Un usuario médico de ejemplo
     jgarcia:
-      password: '$2b$12$Kb.Z... (PEGAR TU HASH GENERADO PARA MEDICO)'
+      password: '$2b$12$BpOvWEpPS7MQrXvHBzMhhOBoh1jDCAk/isRaEvHczkc/FAPMwFRmO'
 
 cookie:
   expiry_days: 60 # Días que dura la sesión
