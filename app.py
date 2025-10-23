@@ -46,10 +46,10 @@ footer {visibility: hidden;}
 # LÍNEAS CORRECTAS
 authenticator.login() # Esta línea dibuja el formulario de "Login"
 
-# Ahora, obtenemos los valores desde el objeto authenticator
-name = authenticator.name
-authentication_status = authenticator.authentication_status
-username = authenticator.username
+# Ahora, obtenemos los valores de forma segura desde st.session_state
+name = st.session_state.get('name')
+authentication_status = st.session_state.get('authentication_status')
+username = st.session_state.get('username')
 
 
 # --- 4. FUNCIÓN DE CARGA DEL MODELO (Desde Azure) ---
