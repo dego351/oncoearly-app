@@ -43,7 +43,7 @@ footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-name, authentication_status, username = authenticator.login('Login', 'main')
+name, authentication_status, username = authenticator.login()
 
 
 # --- 4. FUNCIÓN DE CARGA DEL MODELO (Desde Azure) ---
