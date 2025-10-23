@@ -140,7 +140,15 @@ def procesar_datos_para_modelo(data_dict, scaler, training_columns_after_dummies
             except ValueError as e:
                  st.error(f"Error al escalar datos: {e}.")
                  return None 
-    return input_reindexed
+            
+    # Forzar TODO el DataFrame final a tipo numérico (float)
+    try:
+        input_final = input_reindexed.astype(float)
+    except Exception as e:
+        st.error(f"Error al convertir datos a numérico: {e}")
+        return None
+
+    return input_final # <-- Devuelve input_final, no input_reindexed
 
 # --- 7. FUNCIÓN DE MAPEO DE RIESGO (NUEVA) ---
 def mapear_riesgo(prob_positive):
