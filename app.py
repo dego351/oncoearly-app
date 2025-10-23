@@ -211,10 +211,7 @@ if authentication_status:
 
         submitted = st.form_submit_button("Predecir 🔍")
         
-    if st.sidebar.button("Cerrar sesión 🚪", key="logout_button_sidebar"):
-            if 'page' in st.session_state: del st.session_state.page
-            if 'form_data' in st.session_state: del st.session_state.form_data
-            authenticator.logout("Cerrar sesión", "main")
+    authenticator.logout("Cerrar sesión 🚪", location='sidebar')
     
     # --- GESTIÓN DE PÁGINAS (Usando st.session_state) ---
     
