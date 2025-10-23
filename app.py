@@ -182,13 +182,16 @@ if authentication_status:
 
     # --- Columnas esperadas por el modelo DESPUÉS de get_dummies ---
     training_columns_after_dummies = [
-        'age', 'family_history', 'smoking_habits', 'alcohol_consumption', 
-        'helicobacter_pylori_infection', 'gender_Male', 'dietary_habits_Low_Salt', 
-        'existing_conditions_Diabetes', 'existing_conditions_None', 
-        'endoscopic_images_Normal', 'endoscopic_images_No result', 
-        'biopsy_results_Positive', 'biopsy_results_No result', 
-        'ct_scan_Positive', 'ct_scan_No result' 
-    ]
+    'age', 'family_history', 'smoking_habits', 'alcohol_consumption', 
+    'helicobacter_pylori_infection', 
+    'gender_Male', 
+    'dietary_habits_Low_Salt', 
+    'existing_conditions_Diabetes', 
+    'existing_conditions_None', 
+    'endoscopic_images_Normal', 
+    'biopsy_results_Positive', 
+    'ct_scan_Positive'
+]
 
     # --- Barra Lateral (Formulario de Ingreso) ---
     st.sidebar.image("oncoearly-sinfondo.png", width=150)
