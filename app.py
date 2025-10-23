@@ -241,7 +241,7 @@ if authentication_status:
                   'biopsy_results': biopsy_results,
                   'ct_scan': ct_scan
              }
-             st.experimental_rerun()
+             st.rerun()
 
 
     # --- RENDERIZADO DEL ÁREA PRINCIPAL ---
@@ -306,7 +306,7 @@ if authentication_status:
             if st.button("⬅️ Volver a predecir"):
                 st.session_state.page = 'input' 
                 del st.session_state.form_data 
-                st.experimental_rerun()
+                st.rerun()
         else:
              st.warning("No hay datos de paciente. Ingrese datos en la barra lateral.")
              if st.button("⬅️ Ir al ingreso de datos"):
