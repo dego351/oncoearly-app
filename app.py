@@ -43,7 +43,13 @@ footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-name, authentication_status, username = authenticator.login()
+# LÍNEAS CORRECTAS
+authenticator.login() # Esta línea dibuja el formulario de "Login"
+
+# Ahora, obtenemos los valores desde el objeto authenticator
+name = authenticator.name
+authentication_status = authenticator.authentication_status
+username = authenticator.username
 
 
 # --- 4. FUNCIÓN DE CARGA DEL MODELO (Desde Azure) ---
