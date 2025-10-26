@@ -99,10 +99,21 @@ def plot_shap_force_plot(explainer, input_data):
     try:
         shap_values = explainer.shap_values(input_data)
         
+        # Convertimos el DataFrame a un array NumPy
+        input_data_np = input_data.values
+
+        #Obtenemos los nombres de las columnas
+        feature_names = input_data.columns.tolist()
+
         # Usamos índice 0 como corregimos antes
-        shap.force_plot(explainer.expected_value[0], shap_values[0], input_data, # matplotlib=True, <-- COMENTADO
-                        show=False)
-        st.pyplot(bbox_inches='tight') 
+        shap.force_plot(
+            explainer.expected_value[0],
+            shap_values[0],
+            input_data_np,          # <--- Usamos el array NumPy
+            feature_names=feature_names, # <--- Pasamos los nombres
+            show=False
+        )
+        st.pyplot(bbox_inches='tight')
         st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
         
     except Exception as e:
@@ -111,7 +122,7 @@ def plot_shap_force_plot(explainer, input_data):
         st.error("Ocurrió un error al generar el gráfico SHAP:") # <-- Línea nueva
         st.exception(e) # <-- MUESTRA EL ERROR DETALLADO
         # --- FIN DEL CAMBIO ---
-        
+
 # --- 6. FUNCIÓN DE PROCESAMIENTO DE DATOS ---
 # Basada en tu notebook 'CancerGastricoModelo_v4'
 def procesar_datos_para_modelo(data_dict, scaler, training_columns_after_dummies, numerical_cols_to_scale):
