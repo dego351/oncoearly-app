@@ -91,8 +91,7 @@ def get_shap_explainer(_model, _background_data):
         return None # Devuelve None si falla
 
 def plot_shap_force_plot(explainer, input_data):
-    """Genera y muestra el gráfico SHAP force plot using Explanation object."""
-    st.subheader("Factores clave para ESTE paciente (SHAP):")
+    """Genera y muestra el gráfico SHAP force plot usando el objeto Explanation."""
     try:
         # --- BLOQUE DE DEPURACIÓN SHAP ---
         st.subheader("Factores clave para ESTE paciente (SHAP):") # Movido aquí para visibilidad
