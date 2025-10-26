@@ -94,33 +94,35 @@ def plot_shap_force_plot(explainer, input_data):
     """Genera y muestra el gráfico SHAP force plot using Explanation object."""
     st.subheader("Factores clave para ESTE paciente (SHAP):")
     try:
-        # --- NUEVO INTENTO (NumPy + Nombres + Tipos) ---
-        # 1. Obtenemos los valores SHAP (igual que antes)
+        # --- NUEVO INTENTO (Índices explícitos para 1 fila) ---
+        # 1. Obtenemos los valores SHAP para la entrada específica (igual que antes)
         shap_values = explainer.shap_values(input_data)
 
-        # 2. Convertimos el DataFrame a un array NumPy
-        #    Usamos .iloc[0] para asegurar UNA fila
-        #    Y forzamos el tipo a float32, que SHAP suele manejar bien
-        input_data_np = input_data.iloc[0].values.astype(np.float32)
+        # 2. Extraemos los SHAP values para la PRIMERA muestra [0] y la clase de interés [0]
+        shap_values_for_plot = shap_values[0][0] 
 
-        # 3. Obtenemos los nombres de las columnas
+        # 3. Extraemos los valores de las características como un array NumPy 1D para la PRIMERA muestra [0]
+        #    Y forzamos el tipo a float32, que SHAP suele manejar bien
+        input_features_np = input_data.iloc[0].values.astype(np.float32) 
+
+        # 4. Obtenemos los nombres de las columnas
         feature_names = input_data.columns.tolist()
 
-        # 4. Llamamos a force_plot con el array NumPy y los nombres
+        # 5. Llamamos a force_plot con arrays 1D y nombres
         shap.force_plot(
-            explainer.expected_value[0],
-            shap_values[0][0],        # <-- Índice [0][0] para la primera fila/clase
-            input_data_np,          # <--- Usamos el array NumPy (una fila, float32)
-            feature_names=feature_names, # <--- Pasamos los nombres
+            explainer.expected_value[0], 
+            shap_values_for_plot,    # <--- Array 1D de SHAP values
+            input_features_np,       # <--- Array 1D de features
+            feature_names=feature_names, # <--- Nombres
             # matplotlib=True, <-- Sigue comentado
             show=False
         )
-        st.pyplot(bbox_inches='tight')
+        st.pyplot(bbox_inches='tight') 
         st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
         # --- FIN NUEVO INTENTO ---
-
+        
     except Exception as e:
-        st.error("Ocurrió un error al generar el gráfico SHAP:")
+        st.error("Ocurrió un error al generar el gráfico SHAP:") 
         st.exception(e)
 
 # --- 6. FUNCIÓN DE PROCESAMIENTO DE DATOS ---
