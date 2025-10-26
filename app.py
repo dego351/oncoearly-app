@@ -301,37 +301,49 @@ if authentication_status:
                       # --- SECCIÓN SHAP CORREGIDA ---
                       
                       # 1. Crear los datos de fondo (se cacheará)
-                      #@st.cache_resource
-                      #def create_shap_background(_scaler):
-                          #background_data_raw = {
-                              #'age': [30, 50, 70], 'gender': ['Male', 'Female', 'Male'],
-                              #'family_history': [0, 1, 0], 'smoking_habits': [1, 0, 1],
-                              #'alcohol_consumption': [0, 1, 0], 'helicobacter_pylori_infection': [1, 0, 0],
-                              #'dietary_habits': ['High_Salt', 'Low_Salt', 'High_Salt'],
-                              #'existing_conditions': ['None', 'Diabetes', 'Chronic Gastritis'],
-                              #'endoscopic_images': ['Normal', 'Abnormal', 'No result'],
-                              #'biopsy_results': ['Negative', 'Positive', 'No result'],
-                              #'ct_scan': ['Negative', 'Positive', 'No result']
-                          #}
-                          #background_df = pd.DataFrame(background_data_raw)
+                      @st.cache_resource
+                      def create_shap_background(_scaler):
+                          background_data_raw = {
+                              'age': [30, 50, 70], 'gender': ['Male', 'Female', 'Male'],
+                              'family_history': [0, 1, 0], 'smoking_habits': [1, 0, 1],
+                              'alcohol_consumption': [0, 1, 0], 'helicobacter_pylori_infection': [1, 0, 0],
+                              'dietary_habits': ['High_Salt', 'Low_Salt', 'High_Salt'],
+                              'existing_conditions': ['None', 'Diabetes', 'Chronic Gastritis'],
+                              'endoscopic_images': ['Normal', 'Abnormal', 'No result'],
+                              'biopsy_results': ['Negative', 'Positive', 'No result'],
+                              'ct_scan': ['Negative', 'Positive', 'No result']
+                          }
+                          background_df = pd.DataFrame(background_data_raw)
                           
-                          #processed_list = []
-                          #for i in range(len(background_df)):
-                              #processed_row = procesar_datos_para_modelo(
-                                  #background_df.iloc[i].to_dict(), _scaler, 
-                                  #training_columns_after_dummies, numerical_cols_to_scale
-                              #)
-                              #processed_list.append(processed_row)
-                          # Devolvemos el DF procesado (con floats/ints, sin .astype(int))
-                          #return pd.concat(processed_list) 
+                          processed_list = []
+                          for i in range(len(background_df)):
+                              processed_row = procesar_datos_para_modelo(
+                                  background_df.iloc[i].to_dict(), _scaler, 
+                                  training_columns_after_dummies, numerical_cols_to_scale
+                              )
+                              # Añadir chequeo por si procesar_datos_para_modelo devuelve None
+                              if processed_row is not None:
+                                  processed_list.append(processed_row)
 
-                      #background_data_processed = create_shap_background(scaler)
+                          # Asegurarse que processed_list no esté vacía antes de concatenar
+                          if processed_list:
+                              return pd.concat(processed_list)
+                          else:
+                              # Devolver un DataFrame vacío o con la estructura esperada si falla
+                              st.warning("No se pudieron procesar los datos de fondo para SHAP.")
+                              return pd.DataFrame(columns=training_columns_after_dummies) # Devuelve DF vacío con columnas correctas
+
+                      background_data_processed = create_shap_background(scaler)
                       
                       # 2. Crear el explainer (se cacheará)
-                      #explainer = get_shap_explainer(model, background_data_processed)
+                      # Asegurarse que background_data_processed no esté vacío
+                      if background_data_processed is not None and not background_data_processed.empty:
+                          explainer = get_shap_explainer(model, background_data_processed)
                       
                       # 3. Llamar a la función de ploteo
-                      #plot_shap_force_plot(explainer, input_data)
+                          plot_shap_force_plot(explainer, input_data)
+                      else:
+                          st.warning("No se pudo generar la explicación SHAP debido a problemas con los datos de fondo.")
                       # --- FIN SECCIÓN SHAP ---
 
                  except Exception as e:
