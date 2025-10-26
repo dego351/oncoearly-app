@@ -94,8 +94,9 @@ def plot_shap_force_plot(explainer, input_data):
         shap_values = explainer.shap_values(input_data) 
         
         # Asumiendo que 1 es la clase 'Alto Riesgo'
-        fig = shap.force_plot(explainer.expected_value[0], shap_values[0], input_data, matplotlib=True, show=False)
-        st.pyplot(fig, bbox_inches='tight')
+        shap.force_plot(explainer.expected_value[0], shap_values[0], input_data, # matplotlib=True, <-- COMENTADO
+                        show=False)
+        st.pyplot(bbox_inches='tight') # Mantenemos st.pyplot para reservar el espacio
         st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
     except Exception as e:
         st.warning(f"No se pudo generar el gráfico SHAP: {e}")
