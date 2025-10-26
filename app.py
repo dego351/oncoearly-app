@@ -94,35 +94,39 @@ def plot_shap_force_plot(explainer, input_data):
     """Genera y muestra el gráfico SHAP force plot using Explanation object."""
     st.subheader("Factores clave para ESTE paciente (SHAP):")
     try:
-        # --- NUEVO INTENTO (Índices explícitos para 1 fila) ---
-        # 1. Obtenemos los valores SHAP para la entrada específica (igual que antes)
+        # --- INTENTO FINAL (Datos específicos para Clase 1) ---
+        
+        # 1. Obtenemos los valores SHAP para todas las clases
         shap_values = explainer.shap_values(input_data)
 
-        # 2. Extraemos los SHAP values para la PRIMERA muestra [0] y la clase de interés [0]
-        shap_values_for_plot = shap_values[0][0] 
+        # 2. Extraemos los SHAP values para la CLASE 1 (Alto Riesgo) y la PRIMERA (y única) muestra [0]
+        #    shap_values es una lista [array_clase0, array_clase1]
+        #    Cada array es (n_muestras, n_features). Queremos la fila 0 de array_clase1.
+        shap_values_clase1_muestra0 = shap_values[1][0]
 
-        # 3. Extraemos los valores de las características como un array NumPy 1D para la PRIMERA muestra [0]
-        #    Y forzamos el tipo a float32, que SHAP suele manejar bien
-        input_features_np = input_data.iloc[0].values.astype(np.float32) 
+        # 3. Extraemos los valores de las características de la PRIMERA (y única) muestra [0]
+        #    como un DataFrame de una fila (SHAP prefiere esto a veces)
+        input_features_muestra0 = input_data.iloc[[0]]
 
-        # 4. Obtenemos los nombres de las columnas
-        feature_names = input_data.columns.tolist()
-
-        # 5. Llamamos a force_plot con arrays 1D y nombres
+        # 4. Obtenemos el valor esperado para la CLASE 1
+        expected_value_clase1 = explainer.expected_value[1]
+        
+        # 5. Llamamos a force_plot con los datos específicos
         shap.force_plot(
-            explainer.expected_value[0], 
-            shap_values_for_plot,    # <--- Array 1D de SHAP values
-            input_features_np,       # <--- Array 1D de features
-            feature_names=feature_names, # <--- Nombres
+            expected_value_clase1,      # <-- Valor esperado para clase 1
+            shap_values_clase1_muestra0,# <-- SHAP values para clase 1, muestra 0
+            input_features_muestra0,    # <--- DataFrame de 1 fila con features
             # matplotlib=True, <-- Sigue comentado
             show=False
         )
-        st.pyplot(bbox_inches='tight') 
+        st.pyplot(bbox_inches='tight')
         st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
-        # --- FIN NUEVO INTENTO ---
+        # --- FIN INTENTO FINAL ---
         
+    except IndexError:
+         st.error("Error de índice al acceder a los resultados de SHAP. Verifique las clases del modelo.")
     except Exception as e:
-        st.error("Ocurrió un error al generar el gráfico SHAP:") 
+        st.error("Ocurrió un error al generar el gráfico SHAP:")
         st.exception(e)
 
 # --- 6. FUNCIÓN DE PROCESAMIENTO DE DATOS ---
