@@ -136,14 +136,28 @@ def plot_shap_force_plot(explainer, input_data):
          # Si SIGUE fallando el índice [1], probamos con [0]
          try:
              st.warning("IndexError detectado, intentando con índice [0] para SHAP...")
-             expected_value_clase0 = explainer.expected_value[0]
-             shap_values_clase0_muestra0 = shap_values[0][0] # Asume shap_values[0] es un array 2D
-             input_features_muestra0 = input_data.iloc[[0]]
              
+             # --- CAMBIOS AQUÍ ---
+             # 1. Valor esperado para clase 0 (igual)
+             expected_value_clase0 = explainer.expected_value[0]
+             
+             # 2. SHAP values para la muestra 0, clase 0
+             #    Aseguramos que sea 1D (si es (1, 12) tomamos la fila 0)
+             shap_values_clase0_muestra0 = shap_values[0]
+             if len(np.shape(shap_values_clase0_muestra0)) == 2:
+                 shap_values_clase0_muestra0 = shap_values_clase0_muestra0[0] # Tomar la primera (única) fila
+
+             # 3. Features como array NumPy 1D (igual)
+             input_features_np = input_data.iloc[0].values.astype(np.float32)
+             feature_names = input_data.columns.tolist()
+
+             # 4. Llamar a force_plot con arrays 1D
              shap.force_plot(
                  expected_value_clase0,
-                 shap_values_clase0_muestra0,
-                 input_features_muestra0,
+                 shap_values_clase0_muestra0, # <-- Array 1D
+                 input_features_np,           # <-- Array 1D
+                 feature_names=feature_names,
+                 # matplotlib=True, <-- Sigue comentado
                  show=False
              )
              st.pyplot(bbox_inches='tight')
