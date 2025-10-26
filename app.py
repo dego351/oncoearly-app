@@ -133,42 +133,51 @@ def plot_shap_force_plot(explainer, input_data):
         # --- FIN BLOQUE ---
         
     except IndexError:
-         # Si SIGUE fallando el índice [1], probamos con [0]
-         try:
-             st.warning("IndexError detectado, intentando con índice [0] para SHAP...")
-             
-             # --- CAMBIOS AQUÍ ---
-             # 1. Valor esperado para clase 0 (igual)
-             expected_value_clase0 = explainer.expected_value[0]
-             
-             # 2. SHAP values para la muestra 0, clase 0
-             #    Aseguramos que sea 1D (si es (1, 12) tomamos la fila 0)
-             shap_values_clase0_muestra0 = shap_values[0]
-             if len(np.shape(shap_values_clase0_muestra0)) == 2:
-                 shap_values_clase0_muestra0 = shap_values_clase0_muestra0[0] # Tomar la primera (única) fila
+              try:
+                  st.warning("IndexError detectado, intentando con índice [0] para SHAP...")
+                  
+                  # --- CAMBIOS PARA ASEGURAR ARRAYS 1D ---
+                  
+                  # 1. Valor esperado (debe ser un número solo)
+                  expected_value_clase0 = explainer.expected_value[0]
+                  # Si expected_value es un array/lista, toma el primer elemento
+                  if isinstance(expected_value_clase0, (np.ndarray, list)):
+                      expected_value_clase0 = expected_value_clase0[0]
 
-             # 3. Features como array NumPy 1D (igual)
-             input_features_np = input_data.iloc[0].values.astype(np.float32)
-             feature_names = input_data.columns.tolist()
+                  # 2. SHAP values (debe ser un array 1D)
+                  shap_values_clase0 = shap_values[0] # Obtiene el array para la clase 0
+                  # Si el array tiene forma (1, N_FEATURES), tómalo como 1D
+                  if len(np.shape(shap_values_clase0)) == 2 and np.shape(shap_values_clase0)[0] == 1:
+                      shap_values_clase0_muestra0 = shap_values_clase0[0] # Toma la primera (única) fila
+                  elif len(np.shape(shap_values_clase0)) == 1:
+                       shap_values_clase0_muestra0 = shap_values_clase0 # Ya es 1D
+                  else:
+                       raise ValueError(f"Forma inesperada para shap_values[0]: {np.shape(shap_values_clase0)}")
 
-             # 4. Llamar a force_plot con arrays 1D
-             shap.force_plot(
-                 expected_value_clase0,
-                 shap_values_clase0_muestra0, # <-- Array 1D
-                 input_features_np,           # <-- Array 1D
-                 feature_names=feature_names,
-                 # matplotlib=True, <-- Sigue comentado
-                 show=False
-             )
-             st.pyplot(bbox_inches='tight')
-             st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen. (Usando índice 0)")
-         except Exception as e_inner:
-             st.error("Ocurrió un error al intentar generar el gráfico SHAP con índice [0]:")
-             st.exception(e_inner) # Muestra el error interno si falla de nuevo
-             
-    except Exception as e:
-        st.error("Ocurrió un error general al generar el gráfico SHAP:")
-        st.exception(e) # Muestra otros errores
+                  # 3. Features (debe ser un array 1D)
+                  input_features_np = input_data.iloc[0].values.astype(np.float32)
+                  if len(np.shape(input_features_np)) != 1:
+                       raise ValueError(f"Forma inesperada para input_features_np: {np.shape(input_features_np)}")
+                  
+                  feature_names = input_data.columns.tolist()
+
+                  # 4. Llamar a force_plot con datos 1D
+                  shap.force_plot(
+                      expected_value_clase0,         # <-- Escalar
+                      shap_values_clase0_muestra0, # <-- Array 1D
+                      input_features_np,           # <-- Array 1D
+                      feature_names=feature_names,
+                      # matplotlib=True, <-- Sigue comentado
+                      show=False
+                  )
+                  # --- FIN DE LOS CAMBIOS ---
+                  
+                  st.pyplot(bbox_inches='tight')
+                  st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen. (Usando índice 0)")
+                  
+              except Exception as e_inner:
+                  st.error("Ocurrió un error al intentar generar el gráfico SHAP con índice [0]:")
+                  st.exception(e_inner) # Muestra el error interno si falla de nuevo
 
 # --- 6. FUNCIÓN DE PROCESAMIENTO DE DATOS ---
 # Basada en tu notebook 'CancerGastricoModelo_v4'
