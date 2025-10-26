@@ -94,30 +94,22 @@ def plot_shap_force_plot(explainer, input_data):
     """Genera y muestra el gráfico SHAP force plot using Explanation object."""
     st.subheader("Factores clave para ESTE paciente (SHAP):")
     try:
-        # --- NUEVO BLOQUE (NumPy + Nombres) ---
+        # --- BLOQUE CORRECTO (DataFrame + Índice [0]) ---
         # 1. Obtenemos los valores SHAP (igual que antes)
         shap_values = explainer.shap_values(input_data)
 
-        # 2. Convertimos el DataFrame a un array NumPy
-        #    Usamos .iloc[0] para asegurarnos de pasar solo UNA fila (un solo paciente)
-        input_data_np = input_data.iloc[0].values
-        
-        # 3. Obtenemos los nombres de las columnas
-        feature_names = input_data.columns.tolist()
-
-        # 4. Llamamos a force_plot con el array NumPy y los nombres
+        # 2. Llamamos a force_plot pasando el DataFrame directamente
+        #    Asegurándonos de usar el índice [0] para expected_value y shap_values
         shap.force_plot(
             explainer.expected_value[0],
-            shap_values[0][0],        # <-- Usamos shap_values[0][0] para la primera fila
-            input_data_np,          # <--- Usamos el array NumPy (una fila)
-            feature_names=feature_names, # <--- Pasamos los nombres
+            shap_values[0],  # <-- Usamos shap_values[0] (el array completo para la clase 0)
+            input_data,      # <--- Pasamos el DataFrame original
             # matplotlib=True, <-- Sigue comentado
             show=False
         )
-        st.pyplot(bbox_inches='tight')
+        st.pyplot(bbox_inches='tight') # Mantenemos st.pyplot
         st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
-        # --- FIN NUEVO BLOQUE ---
-        
+        # --- FIN BLOQUE CORRECTO ---
     except Exception as e:
         st.error("Ocurrió un error al generar el gráfico SHAP:")
         st.exception(e)
