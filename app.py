@@ -94,39 +94,68 @@ def plot_shap_force_plot(explainer, input_data):
     """Genera y muestra el gráfico SHAP force plot using Explanation object."""
     st.subheader("Factores clave para ESTE paciente (SHAP):")
     try:
-        # --- BLOQUE CORREGIDO (Índice [0]) ---
-        # 1. Obtenemos los valores SHAP (igual que antes)
+        # --- BLOQUE DE DEPURACIÓN SHAP ---
+        st.subheader("Factores clave para ESTE paciente (SHAP):") # Movido aquí para visibilidad
+
+        # 1. Obtenemos los valores SHAP
         shap_values = explainer.shap_values(input_data)
-
-        # 2. Extraemos los SHAP values para la CLASE POSITIVA (índice 0) y la muestra 0
-        #    Asumimos que SHAP devuelve solo una lista/array para la clase positiva en [0]
-        shap_values_clase_positiva_muestra0 = shap_values[0]
-
-        # 3. Extraemos los features como NumPy (igual)
-        input_features_np = input_data.iloc[0].values.astype(np.float32)
-        feature_names = input_data.columns.tolist()
-
-        # 4. Obtenemos el valor esperado para la CLASE POSITIVA (índice 0)
-        expected_value_clase_positiva = explainer.expected_value[0]
         
-        # 5. Llamamos a force_plot con datos de CLASE POSITIVA (índice 0)
+        # --- AÑADIMOS LÍNEAS DE DEPURACIÓN ---
+        st.write("--- Depuración SHAP ---")
+        st.write(f"Tipo de shap_values: {type(shap_values)}")
+        if isinstance(shap_values, list):
+            st.write(f"Longitud de shap_values: {len(shap_values)}")
+            if len(shap_values) > 0:
+                 st.write(f"Forma del primer elemento (shap_values[0]): {np.shape(shap_values[0])}")
+            if len(shap_values) > 1:
+                 st.write(f"Forma del segundo elemento (shap_values[1]): {np.shape(shap_values[1])}")
+        else: # Si no es una lista (ej. un solo array NumPy)
+             st.write(f"Forma de shap_values (si no es lista): {np.shape(shap_values)}")
+             
+        st.write(f"Tipo de explainer.expected_value: {type(explainer.expected_value)}")
+        st.write(f"Valor de explainer.expected_value: {explainer.expected_value}")
+        st.write("--- Fin Depuración ---")
+        # --- FIN LÍNEAS DE DEPURACIÓN ---
+
+        # (Intentamos la última versión que debería funcionar si devuelve 2 clases)
+        expected_value_clase1 = explainer.expected_value[1]
+        shap_values_clase1_muestra0 = shap_values[1][0]
+        input_features_muestra0 = input_data.iloc[[0]]
+
         shap.force_plot(
-            expected_value_clase_positiva, # <-- Índice [0]
-            shap_values_clase_positiva_muestra0,# <-- Índice [0]
-            input_features_np,
-            feature_names=feature_names,
-            # matplotlib=True, <-- Sigue comentado
+            expected_value_clase1,
+            shap_values_clase1_muestra0,
+            input_features_muestra0,
+            # matplotlib=True, # Sigue comentado
             show=False
         )
         st.pyplot(bbox_inches='tight')
         st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
-        # --- FIN BLOQUE CORREGIDO ---
+        # --- FIN BLOQUE ---
         
     except IndexError:
-         st.error("Error de índice al acceder a los resultados de SHAP. SHAP devolvió datos inesperados.")
+         # Si SIGUE fallando el índice [1], probamos con [0]
+         try:
+             st.warning("IndexError detectado, intentando con índice [0] para SHAP...")
+             expected_value_clase0 = explainer.expected_value[0]
+             shap_values_clase0_muestra0 = shap_values[0][0] # Asume shap_values[0] es un array 2D
+             input_features_muestra0 = input_data.iloc[[0]]
+             
+             shap.force_plot(
+                 expected_value_clase0,
+                 shap_values_clase0_muestra0,
+                 input_features_muestra0,
+                 show=False
+             )
+             st.pyplot(bbox_inches='tight')
+             st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen. (Usando índice 0)")
+         except Exception as e_inner:
+             st.error("Ocurrió un error al intentar generar el gráfico SHAP con índice [0]:")
+             st.exception(e_inner) # Muestra el error interno si falla de nuevo
+             
     except Exception as e:
-        st.error("Ocurrió un error al generar el gráfico SHAP:")
-        st.exception(e)
+        st.error("Ocurrió un error general al generar el gráfico SHAP:")
+        st.exception(e) # Muestra otros errores
 
 # --- 6. FUNCIÓN DE PROCESAMIENTO DE DATOS ---
 # Basada en tu notebook 'CancerGastricoModelo_v4'
