@@ -97,24 +97,30 @@ def plot_shap_force_plot(explainer, input_data):
         st.warning("No se puede generar SHAP (Explainer no inicializado).")
         return
     try:
-        # --- CAMBIO AQUÍ: Usar shap.Explanation ---
+
         # 1. Calcular los valores SHAP (igual que antes)
         shap_values = explainer.shap_values(input_data)
         
         # 2. Obtener el valor base (expected value) para la clase positiva (índice 0)
-        base_value = explainer.expected_value[0]
+        #base_value = explainer.expected_value[0]
         
         # 3. Crear un objeto Explanation
         #    Necesitamos seleccionar la primera (y única) fila de shap_values[0] y input_data
-        explanation = shap.Explanation(
-            values=shap_values[0][0],      # Valores SHAP para la primera muestra, clase positiva
-            base_values=base_value,      # Valor base para la clase positiva
-            data=input_data.iloc[0],     # Datos de entrada para la primera muestra
-            feature_names=input_data.columns.tolist() # Nombres de las columnas
-        )
+        #explanation = shap.Explanation(
+            #values=shap_values[0][0],      # Valores SHAP para la primera muestra, clase positiva
+            #base_values=base_value,      # Valor base para la clase positiva
+            #data=input_data.iloc[0],     # Datos de entrada para la primera muestra
+            #feature_names=input_data.columns.tolist() # Nombres de las columnas
+        #)
         
         # 4. Llamar a force_plot con el objeto Explanation
-        shap.force_plot(explanation, show=False) # Ya no necesitamos matplotlib=True
+        shap.force_plot(
+            explainer.expected_value[0],
+            shap_values[0],
+            input_data, # <--- Pasamos el DataFrame original
+            # matplotlib=True, <-- Sigue comentado
+            show=False
+        )
         st.pyplot(bbox_inches='tight')
         st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
         # --- FIN DEL CAMBIO ---
