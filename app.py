@@ -82,25 +82,36 @@ def load_model_from_azure():
 @st.cache_resource
 def get_shap_explainer(_model, _background_data):
     """Crea el objeto explicador de SHAP usando datos de fondo procesados."""
-    # Quitamos .astype(int) ya que los datos escalados son floats
-    explainer = shap.TreeExplainer(_model, _background_data) 
-    return explainer
+    try: # Añadimos try/except aquí también
+        explainer = shap.TreeExplainer(_model, _background_data)
+        return explainer
+    except Exception as e: # Captura cualquier error al crear el explainer
+        st.error("Error al inicializar SHAP Explainer:")
+        st.exception(e) # <-- MUESTRA EL ERROR DETALLADO
+        return None # Devuelve None si falla
 
 def plot_shap_force_plot(explainer, input_data):
     """Genera y muestra el gráfico SHAP force plot."""
     st.subheader("Factores clave para ESTE paciente (SHAP):")
+    if explainer is None: # Añadimos chequeo por si el explainer falló
+        st.warning("No se puede generar SHAP (Explainer no inicializado).")
+        return
     try:
-        # Quitamos .astype(int)
-        shap_values = explainer.shap_values(input_data) 
+        shap_values = explainer.shap_values(input_data)
         
-        # Asumiendo que 1 es la clase 'Alto Riesgo'
+        # Usamos índice 0 como corregimos antes
         shap.force_plot(explainer.expected_value[0], shap_values[0], input_data, # matplotlib=True, <-- COMENTADO
                         show=False)
-        st.pyplot(bbox_inches='tight') # Mantenemos st.pyplot para reservar el espacio
+        st.pyplot(bbox_inches='tight') 
         st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
+        
     except Exception as e:
-        st.warning(f"No se pudo generar el gráfico SHAP: {e}")
-
+        # --- CAMBIO AQUÍ ---
+        # st.warning(f"No se pudo generar el gráfico SHAP: {e}") # <-- Línea antigua
+        st.error("Ocurrió un error al generar el gráfico SHAP:") # <-- Línea nueva
+        st.exception(e) # <-- MUESTRA EL ERROR DETALLADO
+        # --- FIN DEL CAMBIO ---
+        
 # --- 6. FUNCIÓN DE PROCESAMIENTO DE DATOS ---
 # Basada en tu notebook 'CancerGastricoModelo_v4'
 def procesar_datos_para_modelo(data_dict, scaler, training_columns_after_dummies, numerical_cols_to_scale):
