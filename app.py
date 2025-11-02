@@ -54,6 +54,31 @@ st.markdown("""
         margin-right: auto;
     }
 
+    /* Botón Predecir (Verde) */
+    [data-testid="stSidebar"] [data-testid="stFormSubmitButton"] button {
+        background-color: #28a745; /* Verde */
+        color: white;
+        font-size: 18px; /* Letra más grande */
+        font-weight: bold;
+        width: 100%; /* Ocupa todo el ancho */
+    }
+    [data-testid="stSidebar"] [data-testid="stFormSubmitButton"] button:hover {
+        background-color: #218838; /* Verde más oscuro al pasar el mouse */
+    }
+
+    /* Botón Cerrar Sesión (Rojo) */
+    /* Target el botón normal (stButton) en la barra lateral */
+    [data-testid="stSidebar"] [data-testid="stButton"] button {
+        background-color: #dc3545; /* Rojo */
+        color: white;
+        font-size: 18px; /* Letra más grande */
+        font-weight: bold;
+        width: 100%; /* Ocupa todo el ancho */
+    }
+    [data-testid="stSidebar"] [data-testid="stButton"] button:hover {
+        background-color: #c82333; /* Rojo más oscuro al pasar el mouse */
+    }
+
     /* --- CAMBIO 2: Centrar y agrandar el slogan --- */
     /* Selecciona el texto (p) dentro del contenedor del caption (stCaptionContainer) */
     [data-testid="stCaptionContainer"] > p {
