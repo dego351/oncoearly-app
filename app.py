@@ -80,93 +80,93 @@ def load_model_from_azure():
 # --- 5. FUNCIÓN DE EXPLICABILIDAD (SHAP) ---
 # (Esta función ahora toma los datos de fondo correctos)
 @st.cache_resource
-def get_shap_explainer(_model, _background_data):
-    """Crea el objeto explicador de SHAP usando datos de fondo procesados."""
-    try: # Añadimos try/except aquí también
-        explainer = shap.TreeExplainer(_model, _background_data)
-        return explainer
-    except Exception as e: # Captura cualquier error al crear el explainer
-        st.error("Error al inicializar SHAP Explainer:")
-        st.exception(e) # <-- MUESTRA EL ERROR DETALLADO
-        return None # Devuelve None si falla
+# def get_shap_explainer(_model, _background_data):
+#     """Crea el objeto explicador de SHAP usando datos de fondo procesados."""
+#     try: # Añadimos try/except aquí también
+#         explainer = shap.TreeExplainer(_model, _background_data)
+#         return explainer
+#     except Exception as e: # Captura cualquier error al crear el explainer
+#         st.error("Error al inicializar SHAP Explainer:")
+#         st.exception(e) # <-- MUESTRA EL ERROR DETALLADO
+#         return None # Devuelve None si falla
 
-def plot_shap_force_plot(explainer, input_data):
-    """Genera y muestra el gráfico SHAP force plot usando el objeto Explanation."""
-    try:
-        # --- BLOQUE DE DEPURACIÓN SHAP ---
-        st.subheader("Factores clave para ESTE paciente (SHAP):") # Movido aquí para visibilidad
+# def plot_shap_force_plot(explainer, input_data):
+#     """Genera y muestra el gráfico SHAP force plot usando el objeto Explanation."""
+#     try:
+#         # --- BLOQUE DE DEPURACIÓN SHAP ---
+#         st.subheader("Factores clave para ESTE paciente (SHAP):") # Movido aquí para visibilidad
 
-        # 1. Obtenemos los valores SHAP
-        shap_values = explainer.shap_values(input_data)
+#         # 1. Obtenemos los valores SHAP
+#         shap_values = explainer.shap_values(input_data)
         
-        # --- AÑADIMOS LÍNEAS DE DEPURACIÓN ---
-        st.write("--- Depuración SHAP ---")
-        st.write(f"Tipo de shap_values: {type(shap_values)}")
-        if isinstance(shap_values, list):
-            st.write(f"Longitud de shap_values: {len(shap_values)}")
-            if len(shap_values) > 0:
-                 st.write(f"Forma del primer elemento (shap_values[0]): {np.shape(shap_values[0])}")
-            if len(shap_values) > 1:
-                 st.write(f"Forma del segundo elemento (shap_values[1]): {np.shape(shap_values[1])}")
-        else: # Si no es una lista (ej. un solo array NumPy)
-             st.write(f"Forma de shap_values (si no es lista): {np.shape(shap_values)}")
+#         # --- AÑADIMOS LÍNEAS DE DEPURACIÓN ---
+#         st.write("--- Depuración SHAP ---")
+#         st.write(f"Tipo de shap_values: {type(shap_values)}")
+#         if isinstance(shap_values, list):
+#             st.write(f"Longitud de shap_values: {len(shap_values)}")
+#             if len(shap_values) > 0:
+#                  st.write(f"Forma del primer elemento (shap_values[0]): {np.shape(shap_values[0])}")
+#             if len(shap_values) > 1:
+#                  st.write(f"Forma del segundo elemento (shap_values[1]): {np.shape(shap_values[1])}")
+#         else: # Si no es una lista (ej. un solo array NumPy)
+#              st.write(f"Forma de shap_values (si no es lista): {np.shape(shap_values)}")
              
-        st.write(f"Tipo de explainer.expected_value: {type(explainer.expected_value)}")
-        st.write(f"Valor de explainer.expected_value: {explainer.expected_value}")
-        st.write("--- Fin Depuración ---")
-        # --- FIN LÍNEAS DE DEPURACIÓN ---
+#         st.write(f"Tipo de explainer.expected_value: {type(explainer.expected_value)}")
+#         st.write(f"Valor de explainer.expected_value: {explainer.expected_value}")
+#         st.write("--- Fin Depuración ---")
+#         # --- FIN LÍNEAS DE DEPURACIÓN ---
 
-        # (Intentamos la última versión que debería funcionar si devuelve 2 clases)
-        expected_value_clase1 = explainer.expected_value[1]
-        shap_values_clase1_muestra0 = shap_values[1][0]
-        input_features_muestra0 = input_data.iloc[[0]]
+#         # (Intentamos la última versión que debería funcionar si devuelve 2 clases)
+#         expected_value_clase1 = explainer.expected_value[1]
+#         shap_values_clase1_muestra0 = shap_values[1][0]
+#         input_features_muestra0 = input_data.iloc[[0]]
 
-        shap.force_plot(
-            expected_value_clase1,
-            shap_values_clase1_muestra0,
-            input_features_muestra0,
-            # matplotlib=True, # Sigue comentado
-            show=False
-        )
-        st.pyplot(bbox_inches='tight')
-        st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
-        # --- FIN BLOQUE ---
+#         shap.force_plot(
+#             expected_value_clase1,
+#             shap_values_clase1_muestra0,
+#             input_features_muestra0,
+#             # matplotlib=True, # Sigue comentado
+#             show=False
+#         )
+#         st.pyplot(bbox_inches='tight')
+#         st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
+#         # --- FIN BLOQUE ---
         
-    except IndexError:
-              try:
-                  st.warning("IndexError detectado, intentando con índice [0] para SHAP...")
+#     except IndexError:
+#               try:
+#                   st.warning("IndexError detectado, intentando con índice [0] para SHAP...")
                   
-                  # --- CAMBIOS AQUÍ: Simplificar y usar DataFrame ---
+#                   # --- CAMBIOS AQUÍ: Simplificar y usar DataFrame ---
                   
-                  # 1. Valor esperado para clase 0 (debe ser un escalar)
-                  expected_value_clase0 = explainer.expected_value[0]
-                  if isinstance(expected_value_clase0, (np.ndarray, list)):
-                      expected_value_clase0 = expected_value_clase0[0]
+#                   # 1. Valor esperado para clase 0 (debe ser un escalar)
+#                   expected_value_clase0 = explainer.expected_value[0]
+#                   if isinstance(expected_value_clase0, (np.ndarray, list)):
+#                       expected_value_clase0 = expected_value_clase0[0]
 
-                  # 2. SHAP values para la muestra 0, clase 0
-                  #    Asumimos que shap_values[0] tiene forma (1, N_FEATURES)
-                  #    y pasamos solo la primera fila
-                  shap_values_clase0_muestra0 = shap_values[0][0] 
+#                   # 2. SHAP values para la muestra 0, clase 0
+#                   #    Asumimos que shap_values[0] tiene forma (1, N_FEATURES)
+#                   #    y pasamos solo la primera fila
+#                   shap_values_clase0_muestra0 = shap_values[0][0] 
 
-                  # 3. Features como DataFrame de 1 fila (como antes)
-                  input_features_muestra0 = input_data.iloc[[0]] 
+#                   # 3. Features como DataFrame de 1 fila (como antes)
+#                   input_features_muestra0 = input_data.iloc[[0]] 
                                     
-                  # 4. Llamar a force_plot pasando el DataFrame
-                  shap.force_plot(
-                      expected_value_clase0,         # <-- Escalar
-                      shap_values_clase0_muestra0, # <-- Array 1D de SHAP values
-                      input_features_muestra0,       # <-- DataFrame de 1 fila
-                      # matplotlib=True, <-- Sigue comentado
-                      show=False
-                  )
-                  # --- FIN DE LOS CAMBIOS ---
+#                   # 4. Llamar a force_plot pasando el DataFrame
+#                   shap.force_plot(
+#                       expected_value_clase0,         # <-- Escalar
+#                       shap_values_clase0_muestra0, # <-- Array 1D de SHAP values
+#                       input_features_muestra0,       # <-- DataFrame de 1 fila
+#                       # matplotlib=True, <-- Sigue comentado
+#                       show=False
+#                   )
+#                   # --- FIN DE LOS CAMBIOS ---
                   
-                  st.pyplot(bbox_inches='tight')
-                  st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen. (Usando índice 0)")
+#                   st.pyplot(bbox_inches='tight')
+#                   st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen. (Usando índice 0)")
                   
-              except Exception as e_inner:
-                  st.error("Ocurrió un error al intentar generar el gráfico SHAP con índice [0]:")
-                  st.exception(e_inner) # Muestra el error interno si falla de nuevo
+#               except Exception as e_inner:
+#                   st.error("Ocurrió un error al intentar generar el gráfico SHAP con índice [0]:")
+#                   st.exception(e_inner) # Muestra el error interno si falla de nuevo
 
 # --- 6. FUNCIÓN DE PROCESAMIENTO DE DATOS ---
 # Basada en tu notebook 'CancerGastricoModelo_v4'
@@ -366,56 +366,34 @@ if authentication_status:
                       else: # Medio, Bajo, Muy Bajo
                            st.success(f"**Riesgo de predicción de cáncer gástrico:**\n# {riesgo_texto.upper()} ({prob_positive:.2%})")
                       
-                      # --- SECCIÓN SHAP CORREGIDA ---
+                      # --- INICIO: SECCIÓN FEATURE IMPORTANCE ---
                       
-                      # 1. Crear los datos de fondo (se cacheará)
-                      @st.cache_resource
-                      def create_shap_background(_scaler):
-                          background_data_raw = {
-                              'age': [30, 50, 70], 'gender': ['Male', 'Female', 'Male'],
-                              'family_history': [0, 1, 0], 'smoking_habits': [1, 0, 1],
-                              'alcohol_consumption': [0, 1, 0], 'helicobacter_pylori_infection': [1, 0, 0],
-                              'dietary_habits': ['High_Salt', 'Low_Salt', 'High_Salt'],
-                              'existing_conditions': ['None', 'Diabetes', 'Chronic Gastritis'],
-                              'endoscopic_images': ['Normal', 'Abnormal', 'No result'],
-                              'biopsy_results': ['Negative', 'Positive', 'No result'],
-                              'ct_scan': ['Negative', 'Positive', 'No result']
-                          }
-                          background_df = pd.DataFrame(background_data_raw)
+                      st.subheader("Importancia de las variables en el modelo:")
+                      try:
+                          # Obtiene la importancia directamente del modelo
+                          importances = model.feature_importances_
                           
-                          processed_list = []
-                          for i in range(len(background_df)):
-                              processed_row = procesar_datos_para_modelo(
-                                  background_df.iloc[i].to_dict(), _scaler, 
-                                  training_columns_after_dummies, numerical_cols_to_scale
-                              )
-                              # Añadir chequeo por si procesar_datos_para_modelo devuelve None
-                              if processed_row is not None:
-                                  processed_list.append(processed_row)
-
-                          # Asegurarse que processed_list no esté vacía antes de concatenar
-                          if processed_list:
-                              return pd.concat(processed_list)
-                          else:
-                              # Devolver un DataFrame vacío o con la estructura esperada si falla
-                              st.warning("No se pudieron procesar los datos de fondo para SHAP.")
-                              return pd.DataFrame(columns=training_columns_after_dummies) # Devuelve DF vacío con columnas correctas
-
-                      background_data_processed = create_shap_background(scaler)
-                      
-                      # 2. Crear el explainer (se cacheará)
-                      # Asegurarse que background_data_processed no esté vacío
-                      if background_data_processed is not None and not background_data_processed.empty:
-                          explainer = get_shap_explainer(model, background_data_processed)
-                      
-                      # 3. Llamar a la función de ploteo
-                          plot_shap_force_plot(explainer, input_data)
-                      else:
-                          st.warning("No se pudo generar la explicación SHAP debido a problemas con los datos de fondo.")
-                      # --- FIN SECCIÓN SHAP ---
+                          # Usa la lista de 12 columnas que ya tienes definida
+                          feature_names = training_columns_after_dummies 
+                          
+                          # Crea un DataFrame para ordenarlo y graficarlo
+                          forest_importances = pd.Series(importances, index=feature_names).sort_values(ascending=True)
+                          
+                          # Crea el gráfico de barras horizontal
+                          fig, ax = plt.subplots()
+                          forest_importances.plot.barh(ax=ax) # .barh() es horizontal
+                          ax.set_title("Importancia de las Variables del Modelo")
+                          ax.set_xlabel("Importancia (Reducción de impureza)")
+                          fig.tight_layout()
+                          st.pyplot(fig) # Muestra el gráfico
+                          st.caption("Gráfico de Importancia: Muestra el impacto promedio de cada variable en el modelo.")
+                          
+                      except Exception as e_fi:
+                          st.error(f"Ocurrió un error al generar el gráfico de importancia: {e_fi}")
+                      # --- FIN: SECCIÓN FEATURE IMPORTANCE ---
 
                  except Exception as e:
-                      st.error(f"Ocurrió un error durante la predicción o SHAP: {e}")
+                      st.error(f"Ocurrió un error durante la predicción: {e}")
             else:
                  st.error("Error al procesar los datos de entrada.")
 
