@@ -86,6 +86,11 @@ st.markdown("""
         font-size: 1.1em; /* "un poco más grande" (10% más) */
         font-weight: 500; /* Opcional: un poco más grueso */
     }
+
+    /* Agrandar el logo en la BARRA LATERAL (Sidebar) */
+    [data-testid="stSidebar"] [data-testid="stImage"] > img {
+        width: 200px; /* Ajusta este valor (ej. 200px) como quieras */
+    }
 </style>
 """, unsafe_allow_html=True)
 
