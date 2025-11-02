@@ -42,11 +42,8 @@ st.markdown("""
     [data-testid="stForm"] + div a { display: none; }
     footer {visibility: hidden;}
 
-/* --- ¡NUEVA LÍNEA AÑADIDA! --- */
     /* Oculta el título 'Login' de dentro del formulario */
-    [data-testid="stForm"] h1 {
-        display: none;
-    }
+    [data-testid="stForm"] h1 { display: none; }
 
     /* --- CAMBIO 1: Centrar y agrandar el logo --- */
     /* Selecciona la imagen (img) dentro de su contenedor (stImage) */
