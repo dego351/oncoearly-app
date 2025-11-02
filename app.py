@@ -334,17 +334,61 @@ if authentication_status:
     with st.sidebar.form("prediction_form"):
         st.header("Ingreso de datos clínicos 📋")
         
-        age_input = st.number_input("Edad", min_value=0, max_value=120, value=50, step=1)
-        gender = st.selectbox("Género", options=["Female", "Male"], index=None, placeholder="Seleccione...")
-        family_history = st.selectbox("Antecedente familiar", options=[("No", 0), ("Yes", 1)], format_func=lambda x: x[0], index=None, placeholder="Seleccione...")
-        smoking_habits = st.selectbox("Hábito de fumar", options=[("No", 0), ("Yes", 1)], format_func=lambda x: x[0], index=None, placeholder="Seleccione...")
-        alcohol_consumption = st.selectbox("Consumo de alcohol", options=[("No", 0), ("Yes", 1)], format_func=lambda x: x[0], index=None, placeholder="Seleccione...")
-        helicobacter_pylori_infection = st.selectbox("Infección por Helicobacter pylori", options=[("No", 0), ("Yes", 1)], format_func=lambda x: x[0], index=None, placeholder="Seleccione...")
-        dietary_habits = st.selectbox("Hábitos alimenticios", options=["High_Salt", "Low_Salt"], index=None, placeholder="Seleccione...")
-        existing_conditions = st.selectbox("Condiciones existentes", options=["Chronic Gastritis", "Diabetes", "None"], index=None, placeholder="Seleccione...")
-        endoscopic_images = st.selectbox("Imágenes endoscópicas", options=["Normal", "Abnormal", "No result"], index=None, placeholder="Seleccione...")
-        biopsy_results = st.selectbox("Resultados de biopsia", options=["Positive", "Negative", "No result"], index=None, placeholder="Seleccione...")
-        ct_scan = st.selectbox("Tomografía computarizada", options=["Positive", "Negative", "No result"], index=None, placeholder="Seleccione...")
+        age_input = st.number_input("Edad",
+                                    min_value=0,
+                                    max_value=120,
+                                    value=50,
+                                    step=1)
+
+        gender = st.selectbox("Género", 
+                              options=[("Femenino", "Female"), ("Masculino", "Male")], 
+                              format_func=lambda x: x[0], 
+                              index=None, placeholder="Seleccione...")
+        
+        family_history = st.selectbox("Antecedente familiar", 
+                                      options=[("No", 0), ("Sí", 1)], 
+                                      format_func=lambda x: x[0], 
+                                      index=None, placeholder="Seleccione...")
+        
+        smoking_habits = st.selectbox("Hábito de fumar", 
+                                      options=[("No", 0), ("Sí", 1)], 
+                                      format_func=lambda x: x[0], 
+                                      index=None, placeholder="Seleccione...")
+        
+        alcohol_consumption = st.selectbox("Consumo de alcohol", 
+                                           options=[("No", 0), ("Sí", 1)], 
+                                           format_func=lambda x: x[0], 
+                                           index=None, placeholder="Seleccione...")
+        
+        helicobacter_pylori_infection = st.selectbox("Infección por Helicobacter pylori", 
+                                                     options=[("No", 0), ("Sí", 1)], 
+                                                     format_func=lambda x: x[0], 
+                                                     index=None, placeholder="Seleccione...")
+        
+        dietary_habits = st.selectbox("Hábitos alimenticios", 
+                                      options=[("Alto en sal", "High_Salt"), ("Bajo en sal", "Low_Salt")], 
+                                      format_func=lambda x: x[0], 
+                                      index=None, placeholder="Seleccione...")
+        
+        existing_conditions = st.selectbox("Condiciones existentes", 
+                                           options=[("Gastritis Crónica", "Chronic Gastritis"), ("Diabetes", "Diabetes"), ("Ninguna", "None")], 
+                                           format_func=lambda x: x[0], 
+                                           index=None, placeholder="Seleccione...")
+        
+        endoscopic_images = st.selectbox("Imágenes endoscópicas", 
+                                         options=[("Normal", "Normal"), ("Anormal", "Abnormal"), ("Sin resultado", "No result")], 
+                                         format_func=lambda x: x[0], 
+                                         index=None, placeholder="Seleccione...")
+        
+        biopsy_results = st.selectbox("Resultados de biopsia", 
+                                      options=[("Positivo", "Positive"), ("Negativo", "Negative"), ("Sin resultado", "No result")], 
+                                      format_func=lambda x: x[0], 
+                                      index=None, placeholder="Seleccione...")
+        
+        ct_scan = st.selectbox("Tomografía computarizada", 
+                               options=[("Positivo", "Positive"), ("Negativo", "Negative"), ("Sin resultado", "No result")], 
+                               format_func=lambda x: x[0], 
+                               index=None, placeholder="Seleccione...")
 
         submitted = st.form_submit_button("Predecir 🔍")
         
@@ -367,16 +411,16 @@ if authentication_status:
              st.session_state.page = 'results'
              st.session_state.form_data = {
                   'age': age_input,
-                  'gender': gender,
-                  'family_history': family_history[1], 
+                  'gender': gender[1], # <-- CAMBIO: [1] para obtener "Female" o "Male"
+                  'family_history': family_history[1],
                   'smoking_habits': smoking_habits[1],
                   'alcohol_consumption': alcohol_consumption[1],
                   'helicobacter_pylori_infection': helicobacter_pylori_infection[1],
-                  'dietary_habits': dietary_habits,
-                  'existing_conditions': existing_conditions,
-                  'endoscopic_images': endoscopic_images,
-                  'biopsy_results': biopsy_results,
-                  'ct_scan': ct_scan
+                  'dietary_habits': dietary_habits[1], # <-- CAMBIO: [1] para "High_Salt" o "Low_Salt"
+                  'existing_conditions': existing_conditions[1], # <-- CAMBIO: [1]
+                  'endoscopic_images': endoscopic_images[1], # <-- CAMBIO: [1]
+                  'biopsy_results': biopsy_results[1], # <-- CAMBIO: [1]
+                  'ct_scan': ct_scan[1] # <-- CAMBIO: [1]
              }
              st.rerun()
 
