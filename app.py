@@ -170,7 +170,7 @@ def load_model_from_azure():
 
 # --- 6. FUNCIÓN DE PROCESAMIENTO DE DATOS ---
 # Basada en tu notebook 'CancerGastricoModelo_v4'
-def procesar_datos_para_modelo(data_dict, scaler, training_columns_after_dummies, numerical_cols_to_scale):
+def procesar_datos_para_modelo(data_dict, _scaler, training_columns_after_dummies, numerical_cols_to_scale):
     """
     Convierte datos del formulario, aplica get_dummies y escalado,
     y reindexa para que coincida con el formato de entrenamiento.
