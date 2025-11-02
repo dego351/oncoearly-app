@@ -35,11 +35,29 @@ try:
 except FileNotFoundError:
     st.error("No se encontró el logo. Asegúrate de que 'oncoearly-sinfondo.png' esté en la carpeta.")
 
-# CSS para ocultar el botón "Registrate" y el footer
+# CSS para ocultar "Registrate", el footer Y aplicar estilos a la página de inicio
 st.markdown("""
 <style>
-[data-testid="stForm"] + div a { display: none; }
-footer {visibility: hidden;}
+    /* Oculta "Registrate" y el footer (código existente) */
+    [data-testid="stForm"] + div a { display: none; }
+    footer {visibility: hidden;}
+
+    /* --- CAMBIO 1: Centrar y agrandar el logo --- */
+    /* Selecciona la imagen (img) dentro de su contenedor (stImage) */
+    div[data-testid="stImage"] > img {
+        width: 350px;  /* "un poco más grande" que los 300px originales */
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* --- CAMBIO 2: Centrar y agrandar el slogan --- */
+    /* Selecciona el texto (p) dentro del contenedor del caption (stCaptionContainer) */
+    [data-testid="stCaptionContainer"] > p {
+        text-align: center;
+        font-size: 1.1em; /* "un poco más grande" (10% más) */
+        font-weight: 500; /* Opcional: un poco más grueso */
+    }
 </style>
 """, unsafe_allow_html=True)
 
