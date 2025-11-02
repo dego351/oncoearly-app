@@ -42,6 +42,12 @@ st.markdown("""
     [data-testid="stForm"] + div a { display: none; }
     footer {visibility: hidden;}
 
+/* --- ¡NUEVA LÍNEA AÑADIDA! --- */
+    /* Oculta el título 'Login' de dentro del formulario */
+    [data-testid="stForm"] h1 {
+        display: none;
+    }
+
     /* --- CAMBIO 1: Centrar y agrandar el logo --- */
     /* Selecciona la imagen (img) dentro de su contenedor (stImage) */
     div[data-testid="stImage"] > img {
@@ -61,8 +67,15 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# LÍNEAS CORRECTAS
-authenticator.login() # Esta línea dibuja el formulario de "Login"
+# Define los nuevos nombres para los campos del formulario
+custom_fields = {
+    'Username': 'Usuario',
+    'Password': 'Contraseña',
+    'Login': 'Iniciar Sesión'
+}
+
+# Pasa el diccionario a la función login()
+authenticator.login(fields=custom_fields) # Esta línea dibuja el formulario de "Login"
 
 # Ahora, obtenemos los valores de forma segura desde st.session_state
 name = st.session_state.get('name')
