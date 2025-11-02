@@ -58,7 +58,7 @@ st.markdown("""
     [data-testid="stSidebar"] [data-testid="stFormSubmitButton"] button {
         background-color: #28a745; /* Verde */
         color: white;
-        font-size: 18px; /* Letra más grande */
+        font-size: 30px; /* Letra más grande */
         font-weight: bold;
         width: 100%; /* Ocupa todo el ancho */
     }
@@ -71,7 +71,7 @@ st.markdown("""
     [data-testid="stSidebar"] [data-testid="stButton"] button {
         background-color: #dc3545; /* Rojo */
         color: white;
-        font-size: 18px; /* Letra más grande */
+        font-size: 30px; /* Letra más grande */
         font-weight: bold;
         width: 100%; /* Ocupa todo el ancho */
     }
