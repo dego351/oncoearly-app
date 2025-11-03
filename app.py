@@ -120,7 +120,7 @@ def load_model_from_azure():
     try:
         connection_string = st.secrets["azure_storage"]["connection_string"]
         container_name = "modelos-ml"
-        blob_name = "modelo_rf_entrenado-v7.joblib" # ¡Nombre de tu modelo!
+        blob_name = "modelo_rf_entrenado-v8.joblib" # ¡Nombre de tu modelo!
         
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
