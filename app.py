@@ -147,9 +147,10 @@ def get_lime_explainer(_background_data_processed, _feature_names):
     try:
         explainer = lime.lime_tabular.LimeTabularExplainer(
             training_data=_background_data_processed, # LIME necesita un array NumPy
-            feature_names=_feature_names,
+            feature_names=_feature_names, # Nombres internos (ej. gender_Male)
             class_names=['Bajo Riesgo', 'Alto Riesgo'], # Nombres de tus clases
             mode='classification',
+            discretize_continuous=False, # <--- ¡CAMBIO IMPORTANTE!
             random_state=42
         )
         st.success("Explicador LIME listo.")
@@ -159,10 +160,9 @@ def get_lime_explainer(_background_data_processed, _feature_names):
         st.exception(e)
         return None
 
-def plot_lime_explanation(explainer, model, input_data):
+def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data, friendly_names_dict):
     """
-    Genera y muestra la explicación LIME para una sola predicción.
-    input_data debe ser un DataFrame de 1 fila.
+    Genera y muestra una explicación LIME legible para el doctor.
     """
     st.subheader("Factores clave para ESTE paciente (LIME):")
     if explainer is None:
@@ -170,19 +170,68 @@ def plot_lime_explanation(explainer, model, input_data):
         return
     
     try:
-        # LIME necesita la fila como un array NumPy 1D
-        input_data_np_1d = input_data.iloc[0].values.astype(float)
+        # 1. Obtener la explicación de LIME
+        input_data_np_1d = input_data_processed.iloc[0].values.astype(float)
         
-        # LIME necesita la función predict_proba del modelo
         explanation = explainer.explain_instance(
             data_row=input_data_np_1d, 
             predict_fn=model.predict_proba,
-            num_features=len(input_data.columns) # Muestra todas las features
+            num_features=len(input_data_processed.columns),
+            labels=[1] # Enfócate solo en la clase "Alto Riesgo"
         )
         
-        # Muestra la explicación (LIME puede generar un gráfico o HTML)
-        # Usaremos el gráfico de barras (pyplot)
-        fig = explanation.as_pyplot_figure()
+        # 2. Obtener la lista de factores para la clase "Alto Riesgo"
+        exp_list = explanation.as_list(label=1) 
+        
+        # 3. Preparar los datos para el gráfico
+        labels = []
+        values = []
+        
+        # Iterar en REVERSA para que el más importante quede ARRIBA
+        for feature_string, weight in reversed(exp_list):
+            
+            feature_name = feature_string # ej. 'age', 'gender_Male'
+            
+            # Traducir el nombre interno al nombre amigable
+            friendly_name = friendly_names_dict.get(feature_name, feature_name)
+            
+            # --- INICIO DE LA SECCIÓN ACTUALIZADA ---
+            # Obtener el valor que el doctor ingresó (ej. "Masculino")
+            raw_value_str = ""
+            if feature_name == 'age':
+                raw_value_str = f" (Valor: {raw_form_data['age']})"
+            elif 'gender' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['gender'][0]})" # [0] para "Masculino"
+            elif 'family_history' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['family_history'][0]})" # [0] para "Sí" o "No"
+            elif 'smoking_habits' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['smoking_habits'][0]})"
+            elif 'alcohol_consumption' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['alcohol_consumption'][0]})"
+            elif 'helicobacter_pylori_infection' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['helicobacter_pylori_infection'][0]})"
+            elif 'dietary_habits' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['dietary_habits'][0]})" # [0] para "Alto en sal"
+            elif 'existing_conditions' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['existing_conditions'][0]})" # [0] para "Diabetes"
+            elif 'endoscopic_images' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['endoscopic_images'][0]})" # [0] para "Normal"
+            elif 'biopsy_results' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['biopsy_results'][0]})" # [0] para "Positivo"
+            elif 'ct_scan' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['ct_scan'][0]})" # [0] para "Negativo"
+            # --- FIN DE LA SECCIÓN ACTUALIZADA ---
+
+            labels.append(f"{friendly_name}{raw_value_str}")
+            values.append(weight)
+
+        # 4. Crear el gráfico de barras horizontal
+        fig, ax = plt.subplots()
+        colors = ['#28a745' if v > 0 else '#dc3545' for v in values] # Verde si sube riesgo, Rojo si baja
+        ax.barh(labels, values, color=colors)
+        ax.set_title("Impacto de cada factor en la predicción")
+        ax.set_xlabel("Impacto (Positivo = Sube Riesgo, Negativo = Baja Riesgo)")
+        fig.tight_layout()
         st.pyplot(fig)
         st.caption("Gráfico LIME: Muestra las variables que más contribuyeron a esta predicción.")
 
