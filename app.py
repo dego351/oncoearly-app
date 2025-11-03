@@ -2,14 +2,12 @@ import streamlit as st
 import streamlit_authenticator as stauth
 import pandas as pd
 import joblib
-import shap
 import yaml
 from yaml.loader import SafeLoader
 from azure.storage.blob import BlobServiceClient
 import io  # Para manejar archivos en memoria
 import matplotlib.pyplot as plt # Necesario para el gráfico SHAP
 from sklearn.preprocessing import StandardScaler # Para escalar
-import numpy as np # Necesario para SHAP
 
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="OncoEarly - Cáncer Gástrico", layout="centered")
@@ -119,7 +117,7 @@ def load_model_from_azure():
     try:
         connection_string = st.secrets["azure_storage"]["connection_string"]
         container_name = "modelos-ml"
-        blob_name = "modelo_rf_entrenado-v4.joblib" # ¡Nombre de tu modelo!
+        blob_name = "modelo_rf_entrenado-v6.joblib" # ¡Nombre de tu modelo!
         
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
@@ -138,93 +136,6 @@ def load_model_from_azure():
 # --- 5. FUNCIÓN DE EXPLICABILIDAD (SHAP) ---
 # (Esta función ahora toma los datos de fondo correctos)
 @st.cache_resource
-# def get_shap_explainer(_model, _background_data):
-#     """Crea el objeto explicador de SHAP usando datos de fondo procesados."""
-#     try: # Añadimos try/except aquí también
-#         explainer = shap.TreeExplainer(_model, _background_data)
-#         return explainer
-#     except Exception as e: # Captura cualquier error al crear el explainer
-#         st.error("Error al inicializar SHAP Explainer:")
-#         st.exception(e) # <-- MUESTRA EL ERROR DETALLADO
-#         return None # Devuelve None si falla
-
-# def plot_shap_force_plot(explainer, input_data):
-#     """Genera y muestra el gráfico SHAP force plot usando el objeto Explanation."""
-#     try:
-#         # --- BLOQUE DE DEPURACIÓN SHAP ---
-#         st.subheader("Factores clave para ESTE paciente (SHAP):") # Movido aquí para visibilidad
-
-#         # 1. Obtenemos los valores SHAP
-#         shap_values = explainer.shap_values(input_data)
-        
-#         # --- AÑADIMOS LÍNEAS DE DEPURACIÓN ---
-#         st.write("--- Depuración SHAP ---")
-#         st.write(f"Tipo de shap_values: {type(shap_values)}")
-#         if isinstance(shap_values, list):
-#             st.write(f"Longitud de shap_values: {len(shap_values)}")
-#             if len(shap_values) > 0:
-#                  st.write(f"Forma del primer elemento (shap_values[0]): {np.shape(shap_values[0])}")
-#             if len(shap_values) > 1:
-#                  st.write(f"Forma del segundo elemento (shap_values[1]): {np.shape(shap_values[1])}")
-#         else: # Si no es una lista (ej. un solo array NumPy)
-#              st.write(f"Forma de shap_values (si no es lista): {np.shape(shap_values)}")
-             
-#         st.write(f"Tipo de explainer.expected_value: {type(explainer.expected_value)}")
-#         st.write(f"Valor de explainer.expected_value: {explainer.expected_value}")
-#         st.write("--- Fin Depuración ---")
-#         # --- FIN LÍNEAS DE DEPURACIÓN ---
-
-#         # (Intentamos la última versión que debería funcionar si devuelve 2 clases)
-#         expected_value_clase1 = explainer.expected_value[1]
-#         shap_values_clase1_muestra0 = shap_values[1][0]
-#         input_features_muestra0 = input_data.iloc[[0]]
-
-#         shap.force_plot(
-#             expected_value_clase1,
-#             shap_values_clase1_muestra0,
-#             input_features_muestra0,
-#             # matplotlib=True, # Sigue comentado
-#             show=False
-#         )
-#         st.pyplot(bbox_inches='tight')
-#         st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen.")
-#         # --- FIN BLOQUE ---
-        
-#     except IndexError:
-#               try:
-#                   st.warning("IndexError detectado, intentando con índice [0] para SHAP...")
-                  
-#                   # --- CAMBIOS AQUÍ: Simplificar y usar DataFrame ---
-                  
-#                   # 1. Valor esperado para clase 0 (debe ser un escalar)
-#                   expected_value_clase0 = explainer.expected_value[0]
-#                   if isinstance(expected_value_clase0, (np.ndarray, list)):
-#                       expected_value_clase0 = expected_value_clase0[0]
-
-#                   # 2. SHAP values para la muestra 0, clase 0
-#                   #    Asumimos que shap_values[0] tiene forma (1, N_FEATURES)
-#                   #    y pasamos solo la primera fila
-#                   shap_values_clase0_muestra0 = shap_values[0][0] 
-
-#                   # 3. Features como DataFrame de 1 fila (como antes)
-#                   input_features_muestra0 = input_data.iloc[[0]] 
-                                    
-#                   # 4. Llamar a force_plot pasando el DataFrame
-#                   shap.force_plot(
-#                       expected_value_clase0,         # <-- Escalar
-#                       shap_values_clase0_muestra0, # <-- Array 1D de SHAP values
-#                       input_features_muestra0,       # <-- DataFrame de 1 fila
-#                       # matplotlib=True, <-- Sigue comentado
-#                       show=False
-#                   )
-#                   # --- FIN DE LOS CAMBIOS ---
-                  
-#                   st.pyplot(bbox_inches='tight')
-#                   st.caption("📈 Características en rojo aumentan el riesgo; las de azul lo disminuyen. (Usando índice 0)")
-                  
-#               except Exception as e_inner:
-#                   st.error("Ocurrió un error al intentar generar el gráfico SHAP con índice [0]:")
-#                   st.exception(e_inner) # Muestra el error interno si falla de nuevo
 
 # --- 6. FUNCIÓN DE PROCESAMIENTO DE DATOS ---
 # Basada en tu notebook 'CancerGastricoModelo_v4'
