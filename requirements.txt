@@ -3,7 +3,7 @@ streamlit-authenticator
 pandas
 scikit-learn==1.6.1
 joblib
-shap==0.49.1
 azure-storage-blob
 PyYAML
 matplotlib
+lime

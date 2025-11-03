@@ -7,7 +7,10 @@ from yaml.loader import SafeLoader
 from azure.storage.blob import BlobServiceClient
 import io  # Para manejar archivos en memoria
 import matplotlib.pyplot as plt # Necesario para el gráfico SHAP
+import lime
+import lime.lime_tabular
 from sklearn.preprocessing import StandardScaler # Para escalar
+import numpy as np
 
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="OncoEarly - Cáncer Gástrico", layout="centered")
@@ -133,9 +136,59 @@ def load_model_from_azure():
         st.error(f"Error crítico al cargar el modelo desde Azure: {e}")
         return None
 
-# --- 5. FUNCIÓN DE EXPLICABILIDAD (SHAP) ---
-# (Esta función ahora toma los datos de fondo correctos)
+# --- 5. FUNCIÓN DE EXPLICABILIDAD (LIME) ---
 @st.cache_resource
+def get_lime_explainer(_background_data_processed, _feature_names):
+    """
+    Crea el objeto explicador de LIME usando datos de fondo procesados.
+    _background_data_processed debe ser un array NumPy.
+    """
+    st.info("Inicializando explicador LIME...")
+    try:
+        explainer = lime.lime_tabular.LimeTabularExplainer(
+            training_data=_background_data_processed, # LIME necesita un array NumPy
+            feature_names=_feature_names,
+            class_names=['Bajo Riesgo', 'Alto Riesgo'], # Nombres de tus clases
+            mode='classification',
+            random_state=42
+        )
+        st.success("Explicador LIME listo.")
+        return explainer
+    except Exception as e:
+        st.error(f"Error al inicializar LIME Explainer: {e}")
+        st.exception(e)
+        return None
+
+def plot_lime_explanation(explainer, model, input_data):
+    """
+    Genera y muestra la explicación LIME para una sola predicción.
+    input_data debe ser un DataFrame de 1 fila.
+    """
+    st.subheader("Factores clave para ESTE paciente (LIME):")
+    if explainer is None:
+        st.warning("No se puede generar LIME (Explainer no inicializado).")
+        return
+    
+    try:
+        # LIME necesita la fila como un array NumPy 1D
+        input_data_np_1d = input_data.iloc[0].values.astype(float)
+        
+        # LIME necesita la función predict_proba del modelo
+        explanation = explainer.explain_instance(
+            data_row=input_data_np_1d, 
+            predict_fn=model.predict_proba,
+            num_features=len(input_data.columns) # Muestra todas las features
+        )
+        
+        # Muestra la explicación (LIME puede generar un gráfico o HTML)
+        # Usaremos el gráfico de barras (pyplot)
+        fig = explanation.as_pyplot_figure()
+        st.pyplot(fig)
+        st.caption("Gráfico LIME: Muestra las variables que más contribuyeron a esta predicción.")
+
+    except Exception as e:
+        st.error("Ocurrió un error al generar el gráfico LIME:")
+        st.exception(e)
 
 # --- 6. FUNCIÓN DE PROCESAMIENTO DE DATOS ---
 # Basada en tu notebook 'CancerGastricoModelo_v4'
@@ -381,29 +434,81 @@ if authentication_status:
                       
                       # --- INICIO: SECCIÓN FEATURE IMPORTANCE ---
                       
-                      st.subheader("Importancia de las variables en el modelo:")
-                      try:
-                          # Obtiene la importancia directamente del modelo
-                          importances = model.feature_importances_
+                    #   st.subheader("Importancia de las variables en el modelo:")
+                    #   try:
+                    #       # Obtiene la importancia directamente del modelo
+                    #       importances = model.feature_importances_
                           
-                          # Usa la lista de 12 columnas que ya tienes definida
-                          feature_names = training_columns_after_dummies 
+                    #       # Usa la lista de 12 columnas que ya tienes definida
+                    #       feature_names = training_columns_after_dummies 
                           
-                          # Crea un DataFrame para ordenarlo y graficarlo
-                          forest_importances = pd.Series(importances, index=feature_names).sort_values(ascending=True)
+                    #       # Crea un DataFrame para ordenarlo y graficarlo
+                    #       forest_importances = pd.Series(importances, index=feature_names).sort_values(ascending=True)
                           
-                          # Crea el gráfico de barras horizontal
-                          fig, ax = plt.subplots()
-                          forest_importances.plot.barh(ax=ax) # .barh() es horizontal
-                          ax.set_title("Importancia de las Variables del Modelo")
-                          ax.set_xlabel("Importancia (Reducción de impureza)")
-                          fig.tight_layout()
-                          st.pyplot(fig) # Muestra el gráfico
-                          st.caption("Gráfico de Importancia: Muestra el impacto promedio de cada variable en el modelo.")
+                    #       # Crea el gráfico de barras horizontal
+                    #       fig, ax = plt.subplots()
+                    #       forest_importances.plot.barh(ax=ax) # .barh() es horizontal
+                    #       ax.set_title("Importancia de las Variables del Modelo")
+                    #       ax.set_xlabel("Importancia (Reducción de impureza)")
+                    #       fig.tight_layout()
+                    #       st.pyplot(fig) # Muestra el gráfico
+                    #       st.caption("Gráfico de Importancia: Muestra el impacto promedio de cada variable en el modelo.")
                           
-                      except Exception as e_fi:
-                          st.error(f"Ocurrió un error al generar el gráfico de importancia: {e_fi}")
+                    #   except Exception as e_fi:
+                    #       st.error(f"Ocurrió un error al generar el gráfico de importancia: {e_fi}")
                       # --- FIN: SECCIÓN FEATURE IMPORTANCE ---
+
+                    # --- INICIO: SECCIÓN LIME ---
+                      
+                      # 1. Crear los datos de fondo (se cacheará)
+                      #    (Reutilizamos la lógica que usamos para SHAP)
+                      @st.cache_resource
+                      def create_explainer_background(_scaler):
+                          background_data_raw = {
+                              'age': [30, 50, 70], 'gender': ['Male', 'Female', 'Male'],
+                              'family_history': [0, 1, 0], 'smoking_habits': [1, 0, 1],
+                              'alcohol_consumption': [0, 1, 0], 'helicobacter_pylori_infection': [1, 0, 0],
+                              'dietary_habits': ['High_Salt', 'Low_Salt', 'High_Salt'],
+                              'existing_conditions': ['None', 'Diabetes', 'Chronic Gastritis'],
+                              'endoscopic_images': ['Normal', 'Abnormal', 'No result'],
+                              'biopsy_results': ['Negative', 'Positive', 'No result'],
+                              'ct_scan': ['Negative', 'Positive', 'No result']
+                          }
+                          background_df = pd.DataFrame(background_data_raw)
+                          
+                          processed_list = []
+                          for i in range(len(background_df)):
+                              processed_row = procesar_datos_para_modelo(
+                                  background_df.iloc[i].to_dict(), _scaler, 
+                                  training_columns_after_dummies, numerical_cols_to_scale
+                              )
+                              if processed_row is not None:
+                                  processed_list.append(processed_row)
+
+                          if processed_list:
+                              # LIME necesita un array NumPy
+                              return pd.concat(processed_list).values 
+                          else:
+                              st.warning("No se pudieron procesar los datos de fondo para LIME.")
+                              return None
+
+                      background_data_np = create_explainer_background(scaler)
+                      
+                      # 2. Crear el explainer (se cacheará)
+                      if background_data_np is not None:
+                          lime_explainer = get_lime_explainer(
+                              background_data_np, 
+                              training_columns_after_dummies
+                          )
+                      
+                      # 3. Llamar a la función de ploteo
+                          if lime_explainer:
+                              plot_lime_explanation(lime_explainer, model, input_data)
+                          else:
+                              st.warning("No se pudo inicializar el Explainer de LIME.")
+                      else:
+                          st.warning("No se pudo generar la explicación LIME (sin datos de fondo).")
+                      # --- FIN SECCIÓN LIME ---
 
                  except Exception as e:
                       st.error(f"Ocurrió un error durante la predicción: {e}")
