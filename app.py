@@ -162,7 +162,7 @@ def get_lime_explainer(_background_data_processed, _feature_names):
 
 def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data, friendly_names_dict):
     """
-    Genera y muestra una explicación LIME legible y FILTRADA.
+    Genera y muestra una explicación LIME legible para el doctor.
     """
     st.subheader("Factores clave para ESTE paciente (LIME):")
     if explainer is None:
@@ -176,64 +176,77 @@ def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data,
         explanation = explainer.explain_instance(
             data_row=input_data_np_1d, 
             predict_fn=model.predict_proba,
-            num_features=len(input_data_processed.columns), # Obtenemos TODAS las features
+            num_features=len(input_data_processed.columns),
             labels=[1] # Enfócate solo en la clase "Alto Riesgo"
         )
         
         # 2. Obtener la lista de factores para la clase "Alto Riesgo"
         exp_list = explanation.as_list(label=1) 
         
-        # --- ¡INICIO DEL CAMBIO! ---
-        # 3. Definir las variables INTERNAS que NO queremos mostrar
-        lista_a_ocultar = [
-            'endoscopic_images_Normal',
-            'biopsy_results_Positive',
-            'ct_scan_Positive'
-        ]
-        
-        # 4. Filtrar la lista de explicación
-        filtered_exp_list = []
-        for feature_string, weight in exp_list:
-            feature_name = feature_string # ej. 'age', 'gender_Male'
-            if feature_name not in lista_a_ocultar:
-                filtered_exp_list.append((feature_name, weight))
-        # --- FIN DEL CAMBIO ---
-
-        # 5. Preparar los datos para el gráfico (usando la lista FILTRADA)
+        # 3. Preparar los datos para el gráfico
         labels = []
         values = []
         
-        for feature_string, weight in reversed(filtered_exp_list): # <-- Usa la lista FILTRADA
+        # Iterar en REVERSA para que el más importante quede ARRIBA
+        for feature_string, weight in reversed(exp_list):
             
-            feature_name = feature_string
+            feature_name = feature_string # ej. 'age', 'gender_Male'
+            
+            # Traducir el nombre interno al nombre amigable
             friendly_name = friendly_names_dict.get(feature_name, feature_name)
             
-            # Obtener el valor que el doctor ingresó
+            # --- INICIO DE LA CORRECCIÓN ---
+            # Lógica mejorada para mostrar el valor que ingresó el doctor
             raw_value_str = ""
+            
+            # 1. Variables que ya son legibles (int)
             if feature_name == 'age':
                 raw_value_str = f" (Valor: {raw_form_data['age']})"
+            
+            # 2. Variables binarias (0 o 1) que traducimos a "Sí/No"
+            elif feature_name in ['family_history', 'smoking_habits', 'alcohol_consumption', 'helicobacter_pylori_infection']:
+                # Aquí 'raw_form_data[feature_name]' es un INT (0 o 1), no una lista
+                valor_traducido = "Sí" if raw_form_data[feature_name] == 1 else "No"
+                raw_value_str = f" (Valor: {valor_traducido})"
+            
+            # 3. Variables de texto (dummies)
             elif 'gender' in feature_name:
-                raw_value_str = f" (Valor: {raw_form_data['gender'][0]})"
-            elif 'family_history' in feature_name:
-                raw_value_str = f" (Valor: {raw_form_data['family_history'][0]})"
-            elif 'smoking_habits' in feature_name:
-                raw_value_str = f" (Valor: {raw_form_data['smoking_habits'][0]})"
-            elif 'alcohol_consumption' in feature_name:
-                raw_value_str = f" (Valor: {raw_form_data['alcohol_consumption'][0]})"
-            elif 'helicobacter_pylori_infection' in feature_name:
-                raw_value_str = f" (Valor: {raw_form_data['helicobacter_pylori_infection'][0]})"
+                # Aquí 'raw_form_data['gender']' es un STRING (ej. "Male")
+                valor_traducido = "Masculino" if raw_form_data['gender'] == 'Male' else "Femenino"
+                raw_value_str = f" (Valor: {valor_traducido})"
+            
             elif 'dietary_habits' in feature_name:
-                raw_value_str = f" (Valor: {raw_form_data['dietary_habits'][0]})"
+                valor_traducido = "Bajo en sal" if raw_form_data['dietary_habits'] == 'Low_Salt' else "Alto en sal"
+                raw_value_str = f" (Valor: {valor_traducido})"
+            
             elif 'existing_conditions' in feature_name:
-                raw_value_str = f" (Valor: {raw_form_data['existing_conditions'][0]})"
-            # (Ya no necesitamos los 'elif' para las 3 variables ocultas)
+                # El formulario envía "Chronic Gastritis", "Diabetes", o "None"
+                map_condiciones = {"Chronic Gastritis": "Gastritis Crónica", "Diabetes": "Diabetes", "None": "Ninguna"}
+                valor_traducido = map_condiciones.get(raw_form_data['existing_conditions'], raw_form_data['existing_conditions'])
+                raw_value_str = f" (Valor: {valor_traducido})"
+            
+            elif 'endoscopic_images' in feature_name:
+                map_endo = {"Normal": "Normal", "Abnormal": "Anormal", "No result": "Sin resultado"}
+                valor_traducido = map_endo.get(raw_form_data['endoscopic_images'], raw_form_data['endoscopic_images'])
+                raw_value_str = f" (Valor: {valor_traducido})"
+            
+            elif 'biopsy_results' in feature_name:
+                map_biopsia = {"Positive": "Positivo", "Negative": "Negativo", "No result": "Sin resultado"}
+                valor_traducido = map_biopsia.get(raw_form_data['biopsy_results'], raw_form_data['biopsy_results'])
+                raw_value_str = f" (Valor: {valor_traducido})"
+            
+            elif 'ct_scan' in feature_name:
+                map_ct = {"Positive": "Positivo", "Negative": "Negativo", "No result": "Sin resultado"}
+                valor_traducido = map_ct.get(raw_form_data['ct_scan'], raw_form_data['ct_scan'])
+                raw_value_str = f" (Valor: {valor_traducido})"
+            # --- FIN DE LA CORRECCIÓN ---
 
             labels.append(f"{friendly_name}{raw_value_str}")
             values.append(weight)
 
-        # 6. Crear el gráfico de barras horizontal (igual)
+        # 4. Crear el gráfico de barras horizontal
         fig, ax = plt.subplots()
-        colors = ['#28a745' if v > 0 else '#dc3545' for v in values] 
+        colors = ['#28a745' if v > 0 else '#dc3545' for v in values] # Verde si sube riesgo, Rojo si baja
         ax.barh(labels, values, color=colors)
         ax.set_title("Impacto de cada factor en la predicción")
         ax.set_xlabel("Impacto (Positivo = Sube Riesgo, Negativo = Baja Riesgo)")
