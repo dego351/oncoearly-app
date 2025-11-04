@@ -545,14 +545,14 @@ if authentication_status:
                               training_columns_after_dummies 
                           )
                           
-                          # 4. Llamar a la función de ploteo (¡CORREGIDA!)
+                          # 4. Llamar a la función de ploteo
                           if lime_explainer:
-                              # Ya no pasamos 'raw_form_data'
                               plot_lime_explanation(
                                   lime_explainer, 
                                   model, 
                                   input_data, # Los datos PROCESADOS
-                                  friendly_names_dict # El nuevo diccionario de traducción
+                                  st.session_state.form_data, # Los datos RAW (para traducir)
+                                  friendly_names_dict # <--- ¡AÑADIDO!
                               )
                           else:
                               st.warning("No se pudo inicializar el Explainer de LIME.")
