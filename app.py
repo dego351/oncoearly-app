@@ -130,7 +130,7 @@ def load_model_from_azure():
             blob_bytes = downloader.readall()
             model = joblib.load(io.BytesIO(blob_bytes))
         
-        st.toast("Modelo cargado exitosamente. ✅")
+        st.success("Modelo cargado exitosamente. ✅")
         return model
     except Exception as e:
         st.error(f"Error crítico al cargar el modelo desde Azure: {e}")
