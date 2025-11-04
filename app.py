@@ -160,9 +160,9 @@ def get_lime_explainer(_background_data_processed, _feature_names):
         st.exception(e)
         return None
 
-def plot_lime_explanation(explainer, model, input_data_processed, friendly_names_dict):
+def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data, friendly_names_dict):
     """
-    Genera y muestra una explicación LIME legible, consolidada y sin valores.
+    Genera y muestra una explicación LIME legible, consolidada y limpia.
     """
     st.subheader("Factores clave para ESTE paciente (LIME):")
     if explainer is None:
@@ -170,7 +170,7 @@ def plot_lime_explanation(explainer, model, input_data_processed, friendly_names
         return
     
     try:
-        # 1. Obtener la explicación de LIME (igual que antes)
+        # 1. Obtener la explicación de LIME
         input_data_np_1d = input_data_processed.iloc[0].values.astype(float)
         
         explanation = explainer.explain_instance(
@@ -180,17 +180,14 @@ def plot_lime_explanation(explainer, model, input_data_processed, friendly_names
             labels=[1] # Enfócate solo en la clase "Alto Riesgo"
         )
         
-        # 2. Obtener la lista de factores para la clase "Alto Riesgo"
         exp_list = explanation.as_list(label=1) 
         
-        # --- ¡INICIO DEL CAMBIO! ---
-        # 3. Consolidar y Traducir
-        consolidated_exp = {} # Usamos un diccionario para sumar pesos
+        # --- INICIO LÓGICA DE CONSOLIDACIÓN Y LIMPIEZA ---
+        
+        consolidated_exp = {} # Diccionario para sumar pesos (consolida 'Condición' en una sola barra)
 
         for feature_string, weight in exp_list:
-            # feature_string es el nombre interno (ej. 'existing_conditions_Diabetes')
-            
-            # Identificar la "raíz" de la variable
+            # 1. Identificar la "raíz" de la variable interna
             root_name = feature_string
             if 'existing_conditions_' in feature_string:
                 root_name = 'existing_conditions'
@@ -205,26 +202,29 @@ def plot_lime_explanation(explainer, model, input_data_processed, friendly_names
             elif 'gender_' in feature_string:
                 root_name = 'gender'
             
-            # Traducir la raíz al nombre amigable (ej. "Condición")
-            # (Si no está en el dict de consolidación, usa el dict amigable)
-            friendly_name = friendly_names_dict.get(root_name, feature_name)
+            # 2. Traducir la raíz (usa el nombre amigable: "Biopsia", "Condición", etc.)
+            friendly_name = friendly_names_dict.get(root_name, feature_string)
 
-            # Sumar los pesos para esta variable amigable
+            # 3. Sumar los pesos
             current_weight = consolidated_exp.get(friendly_name, 0)
             consolidated_exp[friendly_name] = current_weight + weight
 
-        # 4. Preparar datos para el gráfico (usando el dict consolidado)
-        #    Ordenamos por el valor (peso) para que el gráfico quede ordenado
+        # 4. Preparar datos para el gráfico final
         sorted_exp = sorted(consolidated_exp.items(), key=lambda item: item[1])
 
-        labels = [item[0] for item in sorted_exp] # <-- Solo el nombre amigable
+        labels = [item[0] for item in sorted_exp]
         values = [item[1] for item in sorted_exp]
-        # --- FIN DEL CAMBIO ---
+        # --- FIN LÓGICA DE CONSOLIDACIÓN ---
 
-        # 5. Crear el gráfico de barras horizontal (limpio)
-        fig, ax = plt.subplots()
-        colors = ['#28a745' if v > 0 else '#dc3545' for v in values] # Verde si sube riesgo, Rojo si baja
+        # 5. Crear el gráfico de barras horizontal
+        fig, ax = plt.subplots(figsize=(8, 6)) # Un poco más grande para mejor visualización
+        colors = ['#28a745' if v > 0 else '#dc3545' for v in values]
         ax.barh(labels, values, color=colors)
+        
+        # Centrar el eje x en cero
+        max_abs = max(abs(min(values)), abs(max(values)))
+        ax.set_xlim(-max_abs * 1.1, max_abs * 1.1)
+
         ax.set_title("Impacto de cada factor en la predicción")
         ax.set_xlabel("Impacto (Positivo = Sube Riesgo, Negativo = Baja Riesgo)")
         fig.tight_layout()
@@ -513,24 +513,23 @@ if authentication_status:
                       if background_data_np is not None:
                           
                           # --- ¡CAMBIO AQUÍ! ---
-                          # 2. Crear DICCIONARIO DE TRADUCCIÓN (para Raíces y Únicos)
+                          # 2. Crear DICCIONARIO DE TRADUCCIÓN
+                          # (Mapea los 12 nombres internos a nombres amigables)
                           friendly_names_dict = {
-                              # Raíces (para consolidar)
-                              'gender': 'Género',
-                              'dietary_habits': 'Dieta',
-                              'existing_conditions': 'Condición',
-                              'endoscopic_images': 'Im. Endoscópicas',
-                              'biopsy_results': 'Biopsia',
-                              'ct_scan': 'Tomografía',
-                              
-                              # Variables individuales (que no se consolidan)
+                              # Raíces CONSOLIDADAS
                               'age': 'Edad',
                               'family_history': 'Antecedente Familiar',
                               'smoking_habits': 'Hábito de Fumar',
                               'alcohol_consumption': 'Consumo de Alcohol', 
                               'helicobacter_pylori_infection': 'Infección H. Pylori',
+                              'gender': 'Género', # <-- Raíz
+                              'dietary_habits': 'Dieta', # <-- Raíz
+                              'existing_conditions': 'Condición', # <-- Raíz
+                              'endoscopic_images': 'Im. Endoscópicas', # <-- Raíz
+                              'biopsy_results': 'Biopsia', # <-- Raíz
+                              'ct_scan': 'Tomografía', # <-- Raíz
                               
-                              # Dummies (como fallback, por si la lógica de raíz falla)
+                              # Las Dummies NO CONSOLIDADAS también deben estar por si acaso
                               'gender_Male': 'Género: Masculino',
                               'dietary_habits_Low_Salt': 'Dieta: Baja en Sal',
                               'existing_conditions_Diabetes': 'Condición: Diabetes', 
