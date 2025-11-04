@@ -130,7 +130,7 @@ def load_model_from_azure():
             blob_bytes = downloader.readall()
             model = joblib.load(io.BytesIO(blob_bytes))
         
-        st.toast("Modelo cargado exitosamente. ✅")
+        st.success("Modelo cargado exitosamente. ✅")
         return model
     except Exception as e:
         st.error(f"Error crítico al cargar el modelo desde Azure: {e}")
@@ -143,7 +143,7 @@ def get_lime_explainer(_background_data_processed, _feature_names):
     Crea el objeto explicador de LIME usando datos de fondo procesados.
     _background_data_processed debe ser un array NumPy.
     """
-    st.toast("Inicializando explicador LIME...")
+    st.info("Inicializando explicador LIME...")
     try:
         explainer = lime.lime_tabular.LimeTabularExplainer(
             training_data=_background_data_processed, # LIME necesita un array NumPy
@@ -153,7 +153,7 @@ def get_lime_explainer(_background_data_processed, _feature_names):
             discretize_continuous=False,
             random_state=42
         )
-        st.toast("Explicador LIME listo.")
+        st.success("Explicador LIME listo.")
         return explainer
     except Exception as e:
         st.error(f"Error al inicializar LIME Explainer: {e}")
