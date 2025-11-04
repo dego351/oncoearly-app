@@ -400,9 +400,9 @@ if authentication_status:
              - **Género:** Género biológico del paciente.
              - **Antecedente familiar:** Si existen casos de cáncer gástrico en familiares directos.
              - **Hábito de fumar:** Si el paciente fuma actualmente o lo ha hecho.
-             - **Consumo de alcohol:** Frecuencia y cantidad de consumo de alcohol.
+             - **Consumo de alcohol:** Alta frecuencia y cantidad de consumo de alcohol.
              - **Infección por Helicobacter pylori:** Resultado de prueba para H. pylori (Sí/No).
-             - **Hábitos alimenticios:** Descripción general de la dieta (ej. alta en sal/grasas, balanceada).
+             - **Hábitos alimenticios:** Descripción general de la dieta (alta en sal, bajo en sal).
              - **Condiciones existentes:** Presencia de otras condiciones médicas relevantes (ej. gastritis crónica, diabetes).
              - **Imágenes endoscópicas:** Hallazgos visuales de la endoscopia (Normal/Anormal/No realizado).
              - **Resultados de biopsia:** Resultado histopatológico (Positivo/Negativo/No realizado).
@@ -431,32 +431,6 @@ if authentication_status:
                            st.error(f"**Riesgo de predicción de cáncer gástrico:**\n# {riesgo_texto.upper()} ({prob_positive:.2%})")
                       else: # Medio, Bajo, Muy Bajo
                            st.success(f"**Riesgo de predicción de cáncer gástrico:**\n# {riesgo_texto.upper()} ({prob_positive:.2%})")
-                      
-                      # --- INICIO: SECCIÓN FEATURE IMPORTANCE ---
-                      
-                    #   st.subheader("Importancia de las variables en el modelo:")
-                    #   try:
-                    #       # Obtiene la importancia directamente del modelo
-                    #       importances = model.feature_importances_
-                          
-                    #       # Usa la lista de 12 columnas que ya tienes definida
-                    #       feature_names = training_columns_after_dummies 
-                          
-                    #       # Crea un DataFrame para ordenarlo y graficarlo
-                    #       forest_importances = pd.Series(importances, index=feature_names).sort_values(ascending=True)
-                          
-                    #       # Crea el gráfico de barras horizontal
-                    #       fig, ax = plt.subplots()
-                    #       forest_importances.plot.barh(ax=ax) # .barh() es horizontal
-                    #       ax.set_title("Importancia de las Variables del Modelo")
-                    #       ax.set_xlabel("Importancia (Reducción de impureza)")
-                    #       fig.tight_layout()
-                    #       st.pyplot(fig) # Muestra el gráfico
-                    #       st.caption("Gráfico de Importancia: Muestra el impacto promedio de cada variable en el modelo.")
-                          
-                    #   except Exception as e_fi:
-                    #       st.error(f"Ocurrió un error al generar el gráfico de importancia: {e_fi}")
-                      # --- FIN: SECCIÓN FEATURE IMPORTANCE ---
 
                     # --- INICIO: SECCIÓN LIME ---
                       
