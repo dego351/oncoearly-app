@@ -164,7 +164,7 @@ def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data,
     """
     Genera y muestra una explicación LIME de magnitud (sin dirección), consolidada y limpia.
     """
-    st.subheader("Impacto de Factores en el Riesgo de Cáncer Gástrico (LIME)")
+    st.subheader("Impacto de Factores en el Riesgo de Cáncer Gástrico:")
     if explainer is None:
         st.warning("No se puede generar LIME (Explainer no inicializado).")
         return
@@ -226,7 +226,7 @@ def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data,
         ax.set_xlabel("Magnitud del Impacto en la Predicción") # <-- Nuevo label del eje X
         fig.tight_layout()
         st.pyplot(fig)
-        st.caption("Gráfico LIME: Muestra qué variables tuvieron el mayor impacto (sin importar la dirección) en esta predicción.")
+        #st.caption("Gráfico LIME: Muestra qué variables tuvieron el mayor impacto (sin importar la dirección) en esta predicción.")
 
     except Exception as e:
         st.error("Ocurrió un error al generar el gráfico LIME:")
