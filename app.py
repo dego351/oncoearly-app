@@ -456,7 +456,7 @@ if authentication_status:
 
     # PÁGINA 3: RESULTADOS
     elif st.session_state.page == 'results' and model and scaler:
-        st.title("Riesgo de Cáncer Gástrico 📊")
+        st.title("Riesgo de Cáncer Gástrico:")
         
         if 'form_data' in st.session_state:
             input_data = procesar_datos_para_modelo(st.session_state.form_data, scaler, training_columns_after_dummies, numerical_cols_to_scale)
