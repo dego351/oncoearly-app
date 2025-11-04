@@ -393,7 +393,7 @@ if authentication_status:
     
     # PÁGINA 2: INGRESO DE DATOS (Guía de ayuda)
     if st.session_state.page == 'input':
-        st.title("Dudas? Consulta esta guía rápida. 💡")
+        st.title("Dudas? Consulta esta guía. 💡")
         with st.expander("Ver descripciones", expanded=True):
              st.markdown(r"""
              - **Edad:** Edad del paciente al momento de la evaluación.
