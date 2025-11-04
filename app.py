@@ -473,9 +473,9 @@ if authentication_status:
                     #   st.subheader("Resultado:")
                       # --- CÓDIGO ACTUALIZADO: MUESTRA ESCALA Y PORCENTAJE ---
                       if prob_positive >= 0.6: # Umbral para Alto o Muy Alto
-                           st.error(f"#{riesgo_texto.upper()} ({prob_positive:.2%})")
+                           st.error(f"# {riesgo_texto.upper()} ({prob_positive:.2%})")
                       else: # Medio, Bajo, Muy Bajo
-                           st.success(f"#{riesgo_texto.upper()} ({prob_positive:.2%})")
+                           st.success(f"# {riesgo_texto.upper()} ({prob_positive:.2%})")
 
                     # --- INICIO: SECCIÓN LIME (Traducida y Consolidada) ---
                       
