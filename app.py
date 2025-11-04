@@ -435,20 +435,24 @@ if authentication_status:
     
     # PÁGINA 2: INGRESO DE DATOS (Guía de ayuda)
     if st.session_state.page == 'input':
-        st.title("Dudas? Consulta esta guía💡")
-        with st.expander("Ver descripciones", expanded=True):
+        st.title("Guía Rápida de Opciones 💡") # <-- Título acortado
+        
+        # --- ¡NOTA IMPORTANTE AÑADIDA! ---
+        st.info("**Importante:** Para realizar la predicción, es necesario completar todos los campos del formulario. Si un resultado no está disponible, seleccione 'Sin resultado'.")
+
+        with st.expander("Ver descripciones de cada campo", expanded=True):
              st.markdown(r"""
-             - **Edad:** Edad del paciente al momento de la evaluación.
+             - **Edad:** Edad del paciente al momento de la evaluación (ej. `50`).
              - **Género:** Género biológico del paciente.
-             - **Antecedente familiar:** Si existen casos de cáncer gástrico en familiares directos.
-             - **Hábito de fumar:** Si el paciente fuma actualmente o lo ha hecho.
-             - **Consumo de alcohol:** Alta frecuencia y cantidad de consumo de alcohol.
-             - **Infección por Helicobacter pylori:** Resultado de prueba para H. pylori (Sí/No).
-             - **Hábitos alimenticios:** Descripción general de la dieta (alta en sal, bajo en sal).
-             - **Condiciones existentes:** Presencia de otras condiciones médicas relevantes (ej. gastritis crónica, diabetes).
-             - **Imágenes endoscópicas:** Hallazgos visuales de la endoscopia (Normal/Anormal/No realizado).
-             - **Resultados de biopsia:** Resultado histopatológico (Positivo/Negativo/No realizado).
-             - **Tomografía computarizada:** Hallazgos en la TC abdominal (Posible tumor/Sin hallazgos/No realizado).
+             - **Antecedente familiar:** `Sí` si existen casos de cáncer gástrico en familiares directos.
+             - **Hábito de fumar:** `Sí` si el paciente fuma actualmente o lo ha hecho.
+             - **Consumo de alcohol:** `Sí` si el paciente tiene un historial de consumo de alcohol.
+             - **Infección por Helicobacter pylori:** `Sí` si la prueba para H. pylori fue positiva.
+             - **Hábitos alimenticios:** Dieta predominante del paciente.
+             - **Condiciones existentes:** Presencia de otras condiciones médicas relevantes.
+             - **Imágenes endoscópicas:** Hallazgos visuales de la endoscopia.
+             - **Resultados de biopsia:** Resultado histopatológico de la muestra.
+             - **Tomografía computarizada:** Hallazgos en la TC abdominal.
              """)
 
     # PÁGINA 3: RESULTADOS
