@@ -143,7 +143,7 @@ def get_lime_explainer(_background_data_processed, _feature_names):
     Crea el objeto explicador de LIME usando datos de fondo procesados.
     _background_data_processed debe ser un array NumPy.
     """
-    st.info("Inicializando explicador LIME...")
+    st.toast("Inicializando explicador LIME...")
     try:
         explainer = lime.lime_tabular.LimeTabularExplainer(
             training_data=_background_data_processed, # LIME necesita un array NumPy
@@ -153,7 +153,7 @@ def get_lime_explainer(_background_data_processed, _feature_names):
             discretize_continuous=False,
             random_state=42
         )
-        st.success("Explicador LIME listo.")
+        st.toast("Explicador LIME listo.")
         return explainer
     except Exception as e:
         st.error(f"Error al inicializar LIME Explainer: {e}")
