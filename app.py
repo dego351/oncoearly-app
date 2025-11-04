@@ -218,7 +218,7 @@ def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data,
 
         # 5. Crear el gráfico de barras horizontal
         fig, ax = plt.subplots(figsize=(8, 6)) # Un poco más grande para mejor visualización
-        colors = ['#28a745' if v > 0 else '#dc3545' for v in values]
+        colors = ['#dc3545' if v > 0 else '#28a745' for v in values]
         ax.barh(labels, values, color=colors)
         
         # Centrar el eje x en cero
@@ -226,7 +226,7 @@ def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data,
         ax.set_xlim(-max_abs * 1.1, max_abs * 1.1)
 
         ax.set_title("Impacto de cada factor en la predicción")
-        ax.set_xlabel("Impacto (Positivo = Sube Riesgo, Negativo = Baja Riesgo)")
+        ax.set_xlabel("Impacto (Rojo = Sube Riesgo, Verde = Baja Riesgo)")
         fig.tight_layout()
         st.pyplot(fig)
         st.caption("Gráfico LIME: Muestra la contribución neta de cada variable a la predicción de 'Alto Riesgo'.")
