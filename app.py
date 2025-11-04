@@ -160,9 +160,9 @@ def get_lime_explainer(_background_data_processed, _feature_names):
         st.exception(e)
         return None
 
-def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data, friendly_names_dict):
+def plot_lime_explanation(explainer, model, input_data_processed, friendly_names_dict):
     """
-    Genera y muestra una explicación LIME legible, consolidada y limpia.
+    Genera y muestra una explicación LIME legible, consolidada Y DE MAGNITUD (sin dirección).
     """
     st.subheader("Factores clave para ESTE paciente (LIME):")
     if explainer is None:
@@ -170,7 +170,7 @@ def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data,
         return
     
     try:
-        # 1. Obtener la explicación de LIME
+        # 1. Obtener la explicación de LIME (igual que antes)
         input_data_np_1d = input_data_processed.iloc[0].values.astype(float)
         
         explanation = explainer.explain_instance(
@@ -180,14 +180,17 @@ def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data,
             labels=[1] # Enfócate solo en la clase "Alto Riesgo"
         )
         
+        # 2. Obtener la lista de factores (ej. [('age', -0.15), ('gender_Male', 0.05)])
         exp_list = explanation.as_list(label=1) 
         
-        # --- INICIO LÓGICA DE CONSOLIDACIÓN Y LIMPIEZA ---
-        
-        consolidated_exp = {} # Diccionario para sumar pesos (consolida 'Condición' en una sola barra)
+        # --- ¡INICIO DEL CAMBIO! ---
+        # 3. Consolidar y Traducir (usando VALOR ABSOLUTO)
+        consolidated_exp = {} # Usamos un diccionario para sumar pesos
 
         for feature_string, weight in exp_list:
-            # 1. Identificar la "raíz" de la variable interna
+            # feature_string es el nombre interno (ej. 'existing_conditions_Diabetes')
+            
+            # Identificar la "raíz" de la variable
             root_name = feature_string
             if 'existing_conditions_' in feature_string:
                 root_name = 'existing_conditions'
@@ -202,34 +205,28 @@ def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data,
             elif 'gender_' in feature_string:
                 root_name = 'gender'
             
-            # 2. Traducir la raíz (usa el nombre amigable: "Biopsia", "Condición", etc.)
+            # Traducir la raíz al nombre amigable (ej. "Condición")
             friendly_name = friendly_names_dict.get(root_name, feature_string)
 
-            # 3. Sumar los pesos
-            current_weight = consolidated_exp.get(friendly_name, 0)
-            consolidated_exp[friendly_name] = current_weight + weight
+            # Sumar los pesos ABSOLUTOS para esta variable amigable
+            current_weight_magnitude = consolidated_exp.get(friendly_name, 0)
+            consolidated_exp[friendly_name] = current_weight_magnitude + abs(weight) # <-- Usamos abs()
 
-        # 4. Preparar datos para el gráfico final
-        sorted_exp = sorted(consolidated_exp.items(), key=lambda item: item[1])
+        # 4. Preparar datos para el gráfico (ordenados por magnitud)
+        sorted_exp = sorted(consolidated_exp.items(), key=lambda item: item[1]) # Ordena de menor a mayor
 
         labels = [item[0] for item in sorted_exp]
-        values = [item[1] for item in sorted_exp]
-        # --- FIN LÓGICA DE CONSOLIDACIÓN ---
+        values = [item[1] for item in sorted_exp] # <-- Valores ahora son todos positivos
+        # --- FIN DEL CAMBIO ---
 
-        # 5. Crear el gráfico de barras horizontal
-        fig, ax = plt.subplots(figsize=(8, 6)) # Un poco más grande para mejor visualización
-        colors = ['#dc3545' if v > 0 else '#28a745' for v in values]
-        ax.barh(labels, values, color=colors)
-        
-        # Centrar el eje x en cero
-        max_abs = max(abs(min(values)), abs(max(values)))
-        ax.set_xlim(-max_abs * 1.1, max_abs * 1.1)
-
-        ax.set_title("Impacto de cada factor en la predicción")
-        ax.set_xlabel("Impacto (Rojo = Sube Riesgo, Verde = Baja Riesgo)")
+        # 5. Crear el gráfico de barras horizontal (simple, un solo color)
+        fig, ax = plt.subplots()
+        ax.barh(labels, values, color='#007bff') # Usamos un color azul neutral
+        ax.set_title("Importancia de cada factor en la predicción")
+        ax.set_xlabel("Magnitud del Impacto en la Predicción") # <-- Nuevo label
         fig.tight_layout()
         st.pyplot(fig)
-        st.caption("Gráfico LIME: Muestra la contribución neta de cada variable a la predicción de 'Alto Riesgo'.")
+        st.caption("Gráfico LIME: Muestra qué variables tuvieron el mayor impacto (sin importar la dirección) en esta predicción.")
 
     except Exception as e:
         st.error("Ocurrió un error al generar el gráfico LIME:")
