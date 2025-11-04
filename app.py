@@ -438,7 +438,7 @@ if authentication_status:
         st.title("Guía Rápida de Opciones 💡") # <-- Título acortado
         
         # --- ¡NOTA IMPORTANTE AÑADIDA! ---
-        st.info("**Importante:** Para realizar la predicción, es necesario completar todos los campos del formulario. Si un resultado no está disponible, seleccione 'Sin resultado'.")
+        st.info("**Importante:** Para realizar la predicción, es necesario completar todos los campos del formulario.")
 
         with st.expander("Ver descripciones de cada campo", expanded=True):
              st.markdown(r"""
