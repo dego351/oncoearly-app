@@ -150,6 +150,7 @@ def get_lime_explainer(_background_data_processed, _feature_names):
             feature_names=_feature_names,
             class_names=['Bajo Riesgo', 'Alto Riesgo'], # Nombres de tus clases
             mode='classification',
+            discretize_continuous=False,
             random_state=42
         )
         st.success("Explicador LIME listo.")
@@ -159,10 +160,9 @@ def get_lime_explainer(_background_data_processed, _feature_names):
         st.exception(e)
         return None
 
-def plot_lime_explanation(explainer, model, input_data):
+def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data, friendly_names_dict):
     """
-    Genera y muestra la explicación LIME para una sola predicción.
-    input_data debe ser un DataFrame de 1 fila.
+    Genera y muestra una explicación LIME legible y FILTRADA.
     """
     st.subheader("Factores clave para ESTE paciente (LIME):")
     if explainer is None:
@@ -170,19 +170,74 @@ def plot_lime_explanation(explainer, model, input_data):
         return
     
     try:
-        # LIME necesita la fila como un array NumPy 1D
-        input_data_np_1d = input_data.iloc[0].values.astype(float)
+        # 1. Obtener la explicación de LIME (igual que antes)
+        input_data_np_1d = input_data_processed.iloc[0].values.astype(float)
         
-        # LIME necesita la función predict_proba del modelo
         explanation = explainer.explain_instance(
             data_row=input_data_np_1d, 
             predict_fn=model.predict_proba,
-            num_features=len(input_data.columns) # Muestra todas las features
+            num_features=len(input_data_processed.columns), # Obtenemos TODAS las features
+            labels=[1] # Enfócate solo en la clase "Alto Riesgo"
         )
         
-        # Muestra la explicación (LIME puede generar un gráfico o HTML)
-        # Usaremos el gráfico de barras (pyplot)
-        fig = explanation.as_pyplot_figure()
+        # 2. Obtener la lista de factores para la clase "Alto Riesgo"
+        exp_list = explanation.as_list(label=1) 
+        
+        # --- ¡INICIO DEL CAMBIO! ---
+        # 3. Definir las variables INTERNAS que NO queremos mostrar
+        lista_a_ocultar = [
+            'endoscopic_images_Normal',
+            'biopsy_results_Positive',
+            'ct_scan_Positive'
+        ]
+        
+        # 4. Filtrar la lista de explicación
+        filtered_exp_list = []
+        for feature_string, weight in exp_list:
+            feature_name = feature_string # ej. 'age', 'gender_Male'
+            if feature_name not in lista_a_ocultar:
+                filtered_exp_list.append((feature_name, weight))
+        # --- FIN DEL CAMBIO ---
+
+        # 5. Preparar los datos para el gráfico (usando la lista FILTRADA)
+        labels = []
+        values = []
+        
+        for feature_string, weight in reversed(filtered_exp_list): # <-- Usa la lista FILTRADA
+            
+            feature_name = feature_string
+            friendly_name = friendly_names_dict.get(feature_name, feature_name)
+            
+            # Obtener el valor que el doctor ingresó
+            raw_value_str = ""
+            if feature_name == 'age':
+                raw_value_str = f" (Valor: {raw_form_data['age']})"
+            elif 'gender' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['gender'][0]})"
+            elif 'family_history' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['family_history'][0]})"
+            elif 'smoking_habits' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['smoking_habits'][0]})"
+            elif 'alcohol_consumption' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['alcohol_consumption'][0]})"
+            elif 'helicobacter_pylori_infection' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['helicobacter_pylori_infection'][0]})"
+            elif 'dietary_habits' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['dietary_habits'][0]})"
+            elif 'existing_conditions' in feature_name:
+                raw_value_str = f" (Valor: {raw_form_data['existing_conditions'][0]})"
+            # (Ya no necesitamos los 'elif' para las 3 variables ocultas)
+
+            labels.append(f"{friendly_name}{raw_value_str}")
+            values.append(weight)
+
+        # 6. Crear el gráfico de barras horizontal (igual)
+        fig, ax = plt.subplots()
+        colors = ['#28a745' if v > 0 else '#dc3545' for v in values] 
+        ax.barh(labels, values, color=colors)
+        ax.set_title("Impacto de cada factor en la predicción")
+        ax.set_xlabel("Impacto (Positivo = Sube Riesgo, Negativo = Baja Riesgo)")
+        fig.tight_layout()
         st.pyplot(fig)
         st.caption("Gráfico LIME: Muestra las variables que más contribuyeron a esta predicción.")
 
@@ -432,12 +487,12 @@ if authentication_status:
                       else: # Medio, Bajo, Muy Bajo
                            st.success(f"**Riesgo de predicción de cáncer gástrico:**\n# {riesgo_texto.upper()} ({prob_positive:.2%})")
 
-                    # --- INICIO: SECCIÓN LIME ---
+                    # --- INICIO: SECCIÓN LIME (Traducida y Filtrada) ---
                       
-                      # 1. Crear los datos de fondo (se cacheará)
-                      #    (Reutilizamos la lógica que usamos para SHAP)
+                      # 1. Crear los datos de fondo (igual que antes)
                       @st.cache_resource
                       def create_explainer_background(_scaler):
+                          # ... (código de create_explainer_background sin cambios) ...
                           background_data_raw = {
                               'age': [30, 50, 70], 'gender': ['Male', 'Female', 'Male'],
                               'family_history': [0, 1, 0], 'smoking_habits': [1, 0, 1],
@@ -449,7 +504,6 @@ if authentication_status:
                               'ct_scan': ['Negative', 'Positive', 'No result']
                           }
                           background_df = pd.DataFrame(background_data_raw)
-                          
                           processed_list = []
                           for i in range(len(background_df)):
                               processed_row = procesar_datos_para_modelo(
@@ -458,26 +512,48 @@ if authentication_status:
                               )
                               if processed_row is not None:
                                   processed_list.append(processed_row)
-
                           if processed_list:
-                              # LIME necesita un array NumPy
-                              return pd.concat(processed_list).values 
+                              return pd.concat(processed_list).values
                           else:
-                              st.warning("No se pudieron procesar los datos de fondo para LIME.")
                               return None
-
+                      
                       background_data_np = create_explainer_background(scaler)
                       
-                      # 2. Crear el explainer (se cacheará)
                       if background_data_np is not None:
+                          
+                          # --- ¡CAMBIO AQUÍ! ---
+                          # 2. Crear DICCIONARIO DE TRADUCCIÓN
+                          # (Debe mapear las 12 columnas internas a nombres amigables)
+                          friendly_names_dict = {
+                              'age': 'Edad',
+                              'family_history': 'Antecedente Familiar',
+                              'smoking_habits': 'Hábito de Fumar',
+                              'alcohol_consumption': 'Consumo de Alcohol', 
+                              'helicobacter_pylori_infection': 'Infección H. Pylori',
+                              'gender_Male': 'Género: Masculino',
+                              'dietary_habits_Low_Salt': 'Dieta: Baja en Sal',
+                              'existing_conditions_Diabetes': 'Condición: Diabetes',
+                              'existing_conditions_None': 'Condición: Ninguna', 
+                              'endoscopic_images_Normal': 'Endoscopía: Normal',
+                              'biopsy_results_Positive': 'Biopsia: Positiva',
+                              'ct_scan_Positive': 'Tomografía: Positiva'
+                          }
+                          
+                          # 3. Crear el explainer (pasando los 12 nombres internos)
                           lime_explainer = get_lime_explainer(
                               background_data_np, 
-                              training_columns_after_dummies
+                              training_columns_after_dummies 
                           )
-                      
-                      # 3. Llamar a la función de ploteo
+                          
+                          # 4. Llamar a la función de ploteo
                           if lime_explainer:
-                              plot_lime_explanation(lime_explainer, model, input_data)
+                              plot_lime_explanation(
+                                  lime_explainer, 
+                                  model, 
+                                  input_data, # Los datos PROCESADOS
+                                  st.session_state.form_data, # Los datos RAW (para traducir)
+                                  friendly_names_dict # El diccionario de traducción
+                              )
                           else:
                               st.warning("No se pudo inicializar el Explainer de LIME.")
                       else:
