@@ -160,9 +160,9 @@ def get_lime_explainer(_background_data_processed, _feature_names):
         st.exception(e)
         return None
 
-def plot_lime_explanation(explainer, model, input_data_processed, friendly_names_dict):
+def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data, friendly_names_dict):
     """
-    Genera y muestra una explicación LIME legible, consolidada Y DE MAGNITUD (sin dirección).
+    Genera y muestra una explicación LIME legible, consolidada y sin valores.
     """
     st.subheader("Factores clave para ESTE paciente (LIME):")
     if explainer is None:
@@ -183,8 +183,8 @@ def plot_lime_explanation(explainer, model, input_data_processed, friendly_names
         # 2. Obtener la lista de factores (ej. [('age', -0.15), ('gender_Male', 0.05)])
         exp_list = explanation.as_list(label=1) 
         
-        # --- ¡INICIO DEL CAMBIO! ---
-        # 3. Consolidar y Traducir (usando VALOR ABSOLUTO)
+        # --- ¡INICIO DE LA LÓGICA DE CONSOLIDACIÓN! ---
+        # 3. Consolidar y Traducir
         consolidated_exp = {} # Usamos un diccionario para sumar pesos
 
         for feature_string, weight in exp_list:
@@ -206,27 +206,28 @@ def plot_lime_explanation(explainer, model, input_data_processed, friendly_names
                 root_name = 'gender'
             
             # Traducir la raíz al nombre amigable (ej. "Condición")
-            friendly_name = friendly_names_dict.get(root_name, feature_string)
+            friendly_name = friendly_names_dict.get(root_name, feature_string) 
 
-            # Sumar los pesos ABSOLUTOS para esta variable amigable
-            current_weight_magnitude = consolidated_exp.get(friendly_name, 0)
-            consolidated_exp[friendly_name] = current_weight_magnitude + abs(weight) # <-- Usamos abs()
+            # Sumar los pesos para esta variable amigable
+            current_weight = consolidated_exp.get(friendly_name, 0)
+            consolidated_exp[friendly_name] = current_weight + weight
 
-        # 4. Preparar datos para el gráfico (ordenados por magnitud)
-        sorted_exp = sorted(consolidated_exp.items(), key=lambda item: item[1]) # Ordena de menor a mayor
+        # 4. Preparar datos para el gráfico (usando el dict consolidado)
+        sorted_exp = sorted(consolidated_exp.items(), key=lambda item: item[1]) # Ordena por peso
 
-        labels = [item[0] for item in sorted_exp]
-        values = [item[1] for item in sorted_exp] # <-- Valores ahora son todos positivos
-        # --- FIN DEL CAMBIO ---
+        labels = [item[0] for item in sorted_exp] # <-- Solo el nombre amigable (ej. "Biopsia")
+        values = [item[1] for item in sorted_exp]
+        # --- FIN DE LA LÓGICA DE CONSOLIDACIÓN ---
 
-        # 5. Crear el gráfico de barras horizontal (simple, un solo color)
+        # 5. Crear el gráfico de barras horizontal (limpio)
         fig, ax = plt.subplots()
-        ax.barh(labels, values, color='#007bff') # Usamos un color azul neutral
-        ax.set_title("Importancia de cada factor en la predicción")
-        ax.set_xlabel("Magnitud del Impacto en la Predicción") # <-- Nuevo label
+        colors = ['#28a745' if v > 0 else '#dc3545' for v in values] # Verde si sube riesgo, Rojo si baja
+        ax.barh(labels, values, color=colors)
+        ax.set_title("Impacto de cada factor en la predicción")
+        ax.set_xlabel("Impacto (Positivo = Sube Riesgo, Negativo = Baja Riesgo)")
         fig.tight_layout()
         st.pyplot(fig)
-        st.caption("Gráfico LIME: Muestra qué variables tuvieron el mayor impacto (sin importar la dirección) en esta predicción.")
+        st.caption("Gráfico LIME: Muestra la contribución neta de cada variable a la predicción de 'Alto Riesgo'.")
 
     except Exception as e:
         st.error("Ocurrió un error al generar el gráfico LIME:")
@@ -480,7 +481,6 @@ if authentication_status:
                       @st.cache_resource
                       def create_explainer_background(_scaler):
                           # ... (código de create_explainer_background sin cambios) ...
-                          # ... (asegúrate que devuelva pd.concat(processed_list).values) ...
                           background_data_raw = {
                               'age': [30, 50, 70], 'gender': ['Male', 'Female', 'Male'],
                               'family_history': [0, 1, 0], 'smoking_habits': [1, 0, 1],
@@ -510,23 +510,24 @@ if authentication_status:
                       if background_data_np is not None:
                           
                           # --- ¡CAMBIO AQUÍ! ---
-                          # 2. Crear DICCIONARIO DE TRADUCCIÓN
-                          # (Mapea los 12 nombres internos a nombres amigables)
+                          # 2. Crear DICCIONARIO DE TRADUCCIÓN (para Raíces y Únicos)
                           friendly_names_dict = {
-                              # Raíces CONSOLIDADAS
+                              # Raíces (para consolidar)
+                              'gender': 'Género',
+                              'dietary_habits': 'Dieta',
+                              'existing_conditions': 'Condición',
+                              'endoscopic_images': 'Im. Endoscópicas',
+                              'biopsy_results': 'Biopsia',
+                              'ct_scan': 'Tomografía',
+                              
+                              # Variables individuales (que no se consolidan)
                               'age': 'Edad',
                               'family_history': 'Antecedente Familiar',
                               'smoking_habits': 'Hábito de Fumar',
                               'alcohol_consumption': 'Consumo de Alcohol', 
                               'helicobacter_pylori_infection': 'Infección H. Pylori',
-                              'gender': 'Género', # <-- Raíz
-                              'dietary_habits': 'Dieta', # <-- Raíz
-                              'existing_conditions': 'Condición', # <-- Raíz
-                              'endoscopic_images': 'Im. Endoscópicas', # <-- Raíz
-                              'biopsy_results': 'Biopsia', # <-- Raíz
-                              'ct_scan': 'Tomografía', # <-- Raíz
                               
-                              # Las Dummies NO CONSOLIDADAS también deben estar por si acaso
+                              # Dummies (como fallback, por si la lógica de raíz falla)
                               'gender_Male': 'Género: Masculino',
                               'dietary_habits_Low_Salt': 'Dieta: Baja en Sal',
                               'existing_conditions_Diabetes': 'Condición: Diabetes', 
@@ -542,14 +543,14 @@ if authentication_status:
                               training_columns_after_dummies 
                           )
                           
-                          # 4. Llamar a la función de ploteo
+                          # 4. Llamar a la función de ploteo (CON 5 ARGUMENTOS)
                           if lime_explainer:
                               plot_lime_explanation(
                                   lime_explainer, 
                                   model, 
                                   input_data, # Los datos PROCESADOS
-                                  st.session_state.form_data, # Los datos RAW (para traducir)
-                                  friendly_names_dict # <--- ¡AÑADIDO!
+                                  st.session_state.form_data, # Los datos RAW (ignorados, pero necesarios)
+                                  friendly_names_dict # El diccionario de traducción
                               )
                           else:
                               st.warning("No se pudo inicializar el Explainer de LIME.")
