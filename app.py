@@ -346,18 +346,18 @@ if authentication_status:
         st.warning(f"No se pudo reajustar el scaler: {e}. Las predicciones pueden no ser precisas.")
 
 
-    # --- Columnas esperadas por el modelo DESPUÉS de get_dummies ---
+# --- Columnas esperadas por el modelo DESPUÉS de get_dummies (VERSIÓN DE 12 COLUMNAS) ---
     training_columns_after_dummies = [
-    'age', 'family_history', 'smoking_habits', 'alcohol_consumption', 
-    'helicobacter_pylori_infection', 
-    'gender_Male', 
-    'dietary_habits_Low_Salt', 
-    'existing_conditions_Diabetes', 
-    'existing_conditions_None', 
-    'endoscopic_images_Normal', 
-    'biopsy_results_Positive', 
-    'ct_scan_Positive'
-]
+        'age', 'family_history', 'smoking_habits', 'alcohol_consumption', 
+        'helicobacter_pylori_infection', 
+        'gender_Male', 
+        'dietary_habits_Low_Salt', 
+        'existing_conditions_Diabetes', 
+        'existing_conditions_None', 
+        'endoscopic_images_Normal', 
+        'biopsy_results_Positive', 
+        'ct_scan_Positive'
+    ]
 
     # --- Barra Lateral (Formulario de Ingreso) ---
     st.sidebar.image("oncoearly-sinfondo.png", width=150)
@@ -500,12 +500,13 @@ if authentication_status:
                       else: # Medio, Bajo, Muy Bajo
                            st.success(f"**Riesgo de predicción de cáncer gástrico:**\n# {riesgo_texto.upper()} ({prob_positive:.2%})")
 
-                    # --- INICIO: SECCIÓN LIME (Traducida y Filtrada) ---
+                    # --- INICIO: SECCIÓN LIME (Traducida y Consolidada) ---
                       
                       # 1. Crear los datos de fondo (igual que antes)
                       @st.cache_resource
                       def create_explainer_background(_scaler):
                           # ... (código de create_explainer_background sin cambios) ...
+                          # ... (asegúrate que devuelva pd.concat(processed_list).values) ...
                           background_data_raw = {
                               'age': [30, 50, 70], 'gender': ['Male', 'Female', 'Male'],
                               'family_history': [0, 1, 0], 'smoking_habits': [1, 0, 1],
@@ -535,21 +536,29 @@ if authentication_status:
                       if background_data_np is not None:
                           
                           # --- ¡CAMBIO AQUÍ! ---
-                          # 2. Crear DICCIONARIO DE TRADUCCIÓN
-                          # (Debe mapear las 12 columnas internas a nombres amigables)
+                          # 2. Crear DICCIONARIO DE TRADUCCIÓN (para Raíces y Únicos)
                           friendly_names_dict = {
+                              # Raíces (para consolidar)
+                              'existing_conditions': 'Condición',
+                              'endoscopic_images': 'Im. Endoscópicas',
+                              'biopsy_results': 'Biopsia',
+                              'ct_scan': 'Tomografía',
+                              
+                              # Variables individuales (que no se consolidan)
                               'age': 'Edad',
                               'family_history': 'Antecedente Familiar',
                               'smoking_habits': 'Hábito de Fumar',
                               'alcohol_consumption': 'Consumo de Alcohol', 
                               'helicobacter_pylori_infection': 'Infección H. Pylori',
-                              'gender_Male': 'Género: Masculino',
-                              'dietary_habits_Low_Salt': 'Dieta: Baja en Sal',
-                              'existing_conditions_Diabetes': 'Condición: Diabetes',
-                              'existing_conditions_None': 'Condición: Ninguna', 
-                              'endoscopic_images_Normal': 'Endoscopía: Normal',
-                              'biopsy_results_Positive': 'Biopsia: Positiva',
-                              'ct_scan_Positive': 'Tomografía: Positiva'
+                              'gender_Male': 'Género (Masculino)',
+                              'dietary_habits_Low_Salt': 'Dieta (Baja en Sal)',
+                              
+                              # Dummies (como fallback, por si la lógica de raíz falla)
+                              'existing_conditions_Diabetes': 'Condición (Diabetes)', 
+                              'existing_conditions_None': 'Condición (Ninguna)', 
+                              'endoscopic_images_Normal': 'Im. Endoscópicas (Normal)',
+                              'biopsy_results_Positive': 'Biopsia (Positiva)',
+                              'ct_scan_Positive': 'Tomografía (Positiva)'
                           }
                           
                           # 3. Crear el explainer (pasando los 12 nombres internos)
@@ -564,15 +573,14 @@ if authentication_status:
                                   lime_explainer, 
                                   model, 
                                   input_data, # Los datos PROCESADOS
-                                  st.session_state.form_data, # Los datos RAW (para traducir)
-                                  friendly_names_dict # El diccionario de traducción
+                                  friendly_names_dict # El nuevo diccionario de traducción
                               )
                           else:
                               st.warning("No se pudo inicializar el Explainer de LIME.")
                       else:
                           st.warning("No se pudo generar la explicación LIME (sin datos de fondo).")
                       # --- FIN SECCIÓN LIME ---
-
+                      
                  except Exception as e:
                       st.error(f"Ocurrió un error durante la predicción: {e}")
             else:
