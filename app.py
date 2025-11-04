@@ -164,7 +164,7 @@ def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data,
     """
     Genera y muestra una explicación LIME de magnitud (sin dirección), consolidada y limpia.
     """
-    st.subheader("Factores clave para ESTE paciente (LIME):")
+    st.subheader("Impacto de Factores en el Riesgo de Cáncer Gástrico (LIME)")
     if explainer is None:
         st.warning("No se puede generar LIME (Explainer no inicializado).")
         return
@@ -222,7 +222,7 @@ def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data,
         # 5. Crear el gráfico de barras horizontal (simple, un solo color)
         fig, ax = plt.subplots(figsize=(8, 6)) # Un poco más grande para mejor visualización
         ax.barh(labels, values, color='#007bff') # <-- ¡Un solo color azul!
-        ax.set_title("Magnitud del Impacto de cada factor en la predicción") # <-- Nuevo título
+        #ax.set_title("Magnitud del Impacto de cada factor en la predicción") # <-- Nuevo título
         ax.set_xlabel("Magnitud del Impacto en la Predicción") # <-- Nuevo label del eje X
         fig.tight_layout()
         st.pyplot(fig)
