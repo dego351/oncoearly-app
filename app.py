@@ -246,7 +246,7 @@ def plot_lime_explanation(explainer, model, input_data_processed, raw_form_data,
 
         # 4. Crear el gráfico de barras horizontal
         fig, ax = plt.subplots()
-        colors = ['#28a745' if v > 0 else '#dc3545' for v in values] # Verde si sube riesgo, Rojo si baja
+        colors = ['#dc3545' if v > 0 else '#28a745' for v in values] # Rojo si sube riesgo, Verde si baja
         ax.barh(labels, values, color=colors)
         ax.set_title("Impacto de cada factor en la predicción")
         ax.set_xlabel("Impacto (Positivo = Sube Riesgo, Negativo = Baja Riesgo)")
