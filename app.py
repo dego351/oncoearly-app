@@ -500,7 +500,7 @@ if authentication_status:
                       else: # Medio, Bajo, Muy Bajo
                            st.success(f"**Riesgo de predicción de cáncer gástrico:**\n# {riesgo_texto.upper()} ({prob_positive:.2%})")
 
-                    # --- INICIO: SECCIÓN LIME (Traducida y Consolidada) ---
+                    # --- INICIO: SECCIÓN LIME (Traducida) ---
                       
                       # 1. Crear los datos de fondo (igual que antes)
                       @st.cache_resource
@@ -536,29 +536,21 @@ if authentication_status:
                       if background_data_np is not None:
                           
                           # --- ¡CAMBIO AQUÍ! ---
-                          # 2. Crear DICCIONARIO DE TRADUCCIÓN (para Raíces y Únicos)
+                          # 2. Crear DICCIONARIO DE TRADUCCIÓN
+                          # (Mapea los 12 nombres internos a nombres amigables)
                           friendly_names_dict = {
-                              # Raíces (para consolidar)
-                              'existing_conditions': 'Condición',
-                              'endoscopic_images': 'Im. Endoscópicas',
-                              'biopsy_results': 'Biopsia',
-                              'ct_scan': 'Tomografía',
-                              
-                              # Variables individuales (que no se consolidan)
                               'age': 'Edad',
                               'family_history': 'Antecedente Familiar',
                               'smoking_habits': 'Hábito de Fumar',
                               'alcohol_consumption': 'Consumo de Alcohol', 
                               'helicobacter_pylori_infection': 'Infección H. Pylori',
-                              'gender_Male': 'Género (Masculino)',
-                              'dietary_habits_Low_Salt': 'Dieta (Baja en Sal)',
-                              
-                              # Dummies (como fallback, por si la lógica de raíz falla)
-                              'existing_conditions_Diabetes': 'Condición (Diabetes)', 
-                              'existing_conditions_None': 'Condición (Ninguna)', 
-                              'endoscopic_images_Normal': 'Im. Endoscópicas (Normal)',
-                              'biopsy_results_Positive': 'Biopsia (Positiva)',
-                              'ct_scan_Positive': 'Tomografía (Positiva)'
+                              'gender_Male': 'Género: Masculino',
+                              'dietary_habits_Low_Salt': 'Dieta: Baja en Sal',
+                              'existing_conditions_Diabetes': 'Condición: Diabetes',
+                              'existing_conditions_None': 'Condición: Ninguna', 
+                              'endoscopic_images_Normal': 'Endoscopía: Normal',
+                              'biopsy_results_Positive': 'Biopsia: Positiva',
+                              'ct_scan_Positive': 'Tomografía: Positiva'
                           }
                           
                           # 3. Crear el explainer (pasando los 12 nombres internos)
@@ -567,20 +559,22 @@ if authentication_status:
                               training_columns_after_dummies 
                           )
                           
-                          # 4. Llamar a la función de ploteo
+                          # 4. Llamar a la función de ploteo (¡CORREGIDA!)
                           if lime_explainer:
+                              # Pasamos los 5 argumentos requeridos
                               plot_lime_explanation(
                                   lime_explainer, 
                                   model, 
                                   input_data, # Los datos PROCESADOS
-                                  friendly_names_dict # El nuevo diccionario de traducción
+                                  st.session_state.form_data, # Los datos RAW (para traducir)
+                                  friendly_names_dict # El diccionario de traducción
                               )
                           else:
                               st.warning("No se pudo inicializar el Explainer de LIME.")
                       else:
                           st.warning("No se pudo generar la explicación LIME (sin datos de fondo).")
                       # --- FIN SECCIÓN LIME ---
-                      
+
                  except Exception as e:
                       st.error(f"Ocurrió un error durante la predicción: {e}")
             else:
@@ -595,7 +589,7 @@ if authentication_status:
              st.warning("No hay datos de paciente. Ingrese datos en la barra lateral.")
              if st.button("⬅️ Ir al ingreso de datos"):
                   st.session_state.page = 'input'
-                  st.experimental_rerun()
+                  st.rerun()
 
 # --- 9. MENSAJES DE ERROR/INFO DE LOGIN ---
 elif authentication_status == False:
