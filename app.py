@@ -456,7 +456,7 @@ if authentication_status:
 
     # PÁGINA 3: RESULTADOS
     elif st.session_state.page == 'results' and model and scaler:
-        st.title("Resultados de la Predicción 📊")
+        st.title("Riesgo de Cáncer Gástrico 📊")
         
         if 'form_data' in st.session_state:
             input_data = procesar_datos_para_modelo(st.session_state.form_data, scaler, training_columns_after_dummies, numerical_cols_to_scale)
@@ -473,9 +473,9 @@ if authentication_status:
                     #   st.subheader("Resultado:")
                       # --- CÓDIGO ACTUALIZADO: MUESTRA ESCALA Y PORCENTAJE ---
                       if prob_positive >= 0.6: # Umbral para Alto o Muy Alto
-                           st.error(f"# {riesgo_texto.upper()} ({prob_positive:.2%})")
+                           st.error(f"#{riesgo_texto.upper()} ({prob_positive:.2%})")
                       else: # Medio, Bajo, Muy Bajo
-                           st.success(f"# {riesgo_texto.upper()} ({prob_positive:.2%})")
+                           st.success(f"#{riesgo_texto.upper()} ({prob_positive:.2%})")
 
                     # --- INICIO: SECCIÓN LIME (Traducida y Consolidada) ---
                       
