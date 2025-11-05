@@ -6,7 +6,11 @@ credentials:
     
     # Un usuario médico de ejemplo
     carlos456:
-      name: 'Carlos Ortiniano'
+      name: 'Carlos Otiniano Alvarado'
+      password: '$2b$12$BpOvWEpPS7MQrXvHBzMhhOBoh1jDCAk/isRaEvHczkc/FAPMwFRmO'
+
+    victor456:
+      name: 'Victor Caballero Saravia'
       password: '$2b$12$BpOvWEpPS7MQrXvHBzMhhOBoh1jDCAk/isRaEvHczkc/FAPMwFRmO'
 
 cookie:
