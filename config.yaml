@@ -5,7 +5,8 @@ credentials:
       password: '$2b$12$15tedniBurs5pK.hFSJXT.dbXKWjDsbBR7KRhrppcpsR9arnx.hcW'
     
     # Un usuario médico de ejemplo
-    Carlos_Ortiniano:
+    carlos456:
+      name: 'Carlos Ortiniano'
       password: '$2b$12$BpOvWEpPS7MQrXvHBzMhhOBoh1jDCAk/isRaEvHczkc/FAPMwFRmO'
 
 cookie:

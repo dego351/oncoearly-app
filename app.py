@@ -335,10 +335,10 @@ if authentication_status:
 
     # --- Barra Lateral (Formulario de Ingreso) ---
     st.sidebar.image("oncoearly-sinfondo.png", width=150)
-    st.sidebar.title(f"Bienvenido Dr. {username} 🩺")
+    st.sidebar.title(f"Bienvenido Dr. {name} 🩺")
     
     with st.sidebar.form("prediction_form"):
-        st.header("Ingreso de datos clínicos 📋")
+        st.header("Ingresar datos clínicos de paciente:")
         
         age_input = st.number_input("Edad",
                                     min_value=0,
